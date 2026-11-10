@@ -1663,15 +1663,13 @@ const lvCls={"入门":"b","进阶":"i","高阶":"a"};
 const isTime=u=>u==="秒";
 
 /* ============ v1.1：版本、主题、更新 ============ */
-const APP_VERSION="v1.31";
+const APP_VERSION="v1.32";
 /* 应用内更新日志：与 version.json 的 changelog 完全一致 */
 const APP_CHANGELOG=[
-  "底栏改成 5 页：记录 / 数据 / 历史 / 动态 / 我的，统计与日历分开",
-  "新增「找朋友」：动态页右上角或「我的」快捷入口，点一行看 TA 的主页",
-  "个人主页扩到四项，显示加入社区时间；训练记录对所有人公开",
-  "空白日只写备注也能保存，休息日不算打卡；保存球不再半透明",
-  "详情页留白 / 返回按钮 / 评论区重排，只有点头像或姓名才进主页",
-  "修复改名换头像不生效；最新体重移到最右并带 kg 单位"
+  "找朋友列表以云端为准，清掉本机历史注册残留的假账号",
+  "训练天数不再拿本机缓存冒充云端数据，云端没记录就显示 0",
+  "首次进入好友页会按需校准一次用户列表，之后不额外请求",
+  "其余与 v1.31 相同：5 tab / 找朋友 / 个人主页四项 / 记录备注"
 ];
 /* 过渡版 v1.29：这个包覆盖安装在原 PUSHUP App 上，包名是 com.simplejuzi.pushup。
    更新检查必须继续指向原仓库 simplejuzi/PUSHUP，否则收不到后续版本。
@@ -2741,13 +2739,22 @@ function closeRecords(){switchTab(RECS_BACK||"profile");}
 /* ============ v6：找朋友（所有用户列表） ============
    返回：SUB_PARENT.friends 记录来路（feed / profile），左上角与系统返回键都走它；
    从好友页点进用户主页时，openUserProfile 会把 USER_BACK 记成 friends，天然回到这里。 */
-let FRIENDS_BACK="feed",FRIENDS_STATS=null,_friendsLoading=false;
+let FRIENDS_BACK="feed",FRIENDS_STATS=null,_friendsLoading=false,FRIENDS_CLEANED=false;
 function openFriends(from){
   const cur=(typeof currentPageName==="function")?currentPageName():"feed";
   FRIENDS_BACK=(from&&from!=="friends")?from:((cur==="friends")?"feed":(SUB_PARENT.friends||"feed"));
   SUB_PARENT.friends=FRIENDS_BACK;
   renderFriends();
   switchTab("friends");
+  /* v1.32：旧版本本机缓存里可能留着假账号，首次进好友页用云端校准一次（会话内仅一次）。
+     之后 s.users 已是干净的，不再产生额外请求。 */
+  if(CLOUD()&&!FRIENDS_CLEANED){
+    FRIENDS_CLEANED=true;
+    syncCloud().then(function(){
+      const pg=document.getElementById("page-friends");
+      if(pg&&pg.classList.contains("on"))renderFriends();
+    });
+  }
   loadFriendsStats().then(function(){
     const pg=document.getElementById("page-friends");
     if(pg&&pg.classList.contains("on"))renderFriends();
@@ -2773,8 +2780,8 @@ function loadFriendsStats(force){
   }).catch(function(){_friendsLoading=false;FRIENDS_STATS={};return {};});
 }
 function friendDays(uid){
-  if(FRIENDS_STATS&&FRIENDS_STATS[uid])return Object.keys(FRIENDS_STATS[uid]).length;
-  return (typeof userWorkoutDays==="function")?userWorkoutDays(uid):0;
+  if(FRIENDS_STATS)return FRIENDS_STATS[uid]?Object.keys(FRIENDS_STATS[uid]).length:0;
+  return 0;   /* v1.32：不再拿本机缓存冒充云端训练天数（云端 records 为空时应显示 0） */
 }
 function renderFriends(){
   const box=document.getElementById("friendsList");if(!box)return;
@@ -4403,6 +4410,15 @@ function syncCloud(){
       if(!u){s.users.push({id:p.id,name:p.name,pass:"",emoji:p.emoji||DEFAULT_AVATAR,avatar:""});}
       else{ if(p.name)u.name=p.name; u.emoji=p.emoji||DEFAULT_AVATAR; u.avatar=""; }
     });
+    /* v1.32：以云端 profiles 为准剔除本机历史假账号。
+       以前合并只增不删，localRegister() 本地建号（id 为 u... 开头）会永远留在 s.users，
+       导致「找朋友」列出数据库里根本不存在的人。只额外保留当前登录的自己，
+       避免未上云的本地账号被误删；profiles 为空（网络异常 / 降级）时不动，防止误清。 */
+    if(ps&&ps.length){
+      const ids=Object.create(null);
+      ps.forEach(function(p){if(p&&p.id)ids[p.id]=1;});
+      s.users=s.users.filter(function(u){return u&&u.id&&(ids[u.id]||u.id===s.session);});
+    }
     /* 以云端为准全量替换，才能感知对方的删除 / 取消点赞 */
     if(po){
       const mineOff=s.posts.filter(function(p){return p.uid===s.session&&!po.some(function(x){return x.id===p.id;});});
