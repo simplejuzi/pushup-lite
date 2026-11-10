@@ -8,6 +8,7 @@
 | 文档 | 内容 |
 |---|---|
 | **[HANDOFF.md](./HANDOFF.md)** | **交接文档：完整状态、架构、数据库、反代消耗账、踩过的坑、下一步** |
+| [HANDOFF-PROMPT.md](./HANDOFF-PROMPT.md) | 把项目交接给另一个 AI 时，直接复制粘贴的话术 |
 | [CHANGELOG.md](./CHANGELOG.md) | 版本更新日志 |
 | [`supabase.sql`](./supabase.sql) | 建表脚本（6 张表 + 省流函数 `lite_bundle()`） |
 | [`supabase-proxy/`](./supabase-proxy/) | 反代云函数源码（腾讯云 SCF） |
