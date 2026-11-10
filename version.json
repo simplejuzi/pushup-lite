@@ -1,12 +1,12 @@
 {
-  "version": "1.1",
-  "tag": "v1.1",
-  "apk": "PUSHUP-Lite-v1.1.apk",
-  "apkUrl": "https://github.com/simplejuzi/pushup-lite/releases/download/v1.1/PUSHUP-Lite-v1.1.apk",
+  "version": "1.29",
+  "tag": "v1.29",
+  "apk": "PUSHUP-v1.29.apk",
+  "apkUrl": "https://github.com/simplejuzi/PUSHUP/releases/download/v1.29/PUSHUP-v1.29.apk",
   "changelog": [
-    "切换到全新的独立云端（与完整版数据彻底分开）",
-    "动态页同步从每 4 秒 4 个请求优化为每 8 秒 1 个请求，服务器消耗降到约 1/7",
-    "账号校验缓存延长到 60 秒，后台与锁屏时完全停止同步",
-    "修复与优化若干细节"
+    "从完整版升级为 Lite 界面：保留记录 / 数据 / 动态 / 我的四个页面",
+    "原有账号、登录状态和云端数据全部保留，无需重新注册",
+    "去掉聊天、好友、通知和图片上传，头像改为 emoji",
+    "动态页保持每 8 秒 1 次同步，切后台完全停止"
   ]
 }

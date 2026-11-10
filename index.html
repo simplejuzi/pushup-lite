@@ -1542,27 +1542,25 @@ const lvCls={"入门":"b","进阶":"i","高阶":"a"};
 const isTime=u=>u==="秒";
 
 /* ============ v1.1：版本、主题、更新 ============ */
-const APP_VERSION="v1.1";
+const APP_VERSION="v1.29";
 /* 应用内更新日志：与 version.json 的 changelog 完全一致 */
 const APP_CHANGELOG=[
-  "PUSHUP Lite 首个版本：只保留 记录 / 数据 / 动态 / 我的 四个页面",
-  "去掉聊天、加好友、通知——想记录就记录，不打扰",
-  "去掉所有图片上传：动态只发文字，头像改成一个 emoji",
-  "云同步请求大幅精简：只在动态页按需同步、字段只取必要的、间隔从 1 秒放到 4 秒",
+  "从完整版升级为 Lite 界面：保留记录 / 数据 / 动态 / 我的四个页面",
+  "原有账号、登录状态和云端数据全部保留，无需重新注册",
+  "去掉聊天、好友、通知和图片上传，头像改为 emoji",
+  "动态页保持每 8 秒 1 次同步，切后台完全停止"
 ];
-const RELEASE_PAGE="https://github.com/simplejuzi/pushup-lite/releases/latest";
-/* APK 只允许来自本仓库的 Release：第三方镜像万一被篡改，也不至于指向别处 */
-const APK_URL_PREFIX="https://github.com/simplejuzi/pushup-lite/releases/";
-/* 检查更新：国内优先、逐级降级、全部失败保持静默（绝不弹网络错误）。
-   2026-11-10 国内实测：raw.githubusercontent.com / cdn.jsdelivr.net 直连不通，
-   api.github.com 与 github.com 可通；下面两个镜像均返回 200 且带 CORS:*。
-   jsDelivr 直接取 GitHub 仓库内容，作首选；ghproxy 缓存 5 分钟，作备用；
-   最后保留原 GitHub Release 接口，能通时可直接拿到真实 APK 附件地址。
-   注意 jsDelivr 对 @main 有 CDN 缓存（最长约 12h），发版后想立刻生效需在其后台 purge。 */
+/* 过渡版 v1.29：这个包覆盖安装在原 PUSHUP App 上，包名是 com.simplejuzi.pushup。
+   更新检查必须继续指向原仓库 simplejuzi/PUSHUP，否则收不到后续版本。
+   以 Release 接口为准（原仓库 main 的 version.json 仍停在 v1.28），
+   两个国内镜像只作备用；以后发新版只需在原仓库新建 Release。 */
+const RELEASE_PAGE="https://github.com/simplejuzi/PUSHUP/releases/latest";
+/* APK 只允许来自原仓库的 Release：第三方镜像万一被篡改，也不至于指向别处 */
+const APK_URL_PREFIX="https://github.com/simplejuzi/PUSHUP/releases/";
 const UPDATE_ENDPOINTS=[
-  "https://fastly.jsdelivr.net/gh/simplejuzi/pushup-lite@main/version.json",
-  "https://ghproxy.net/https://raw.githubusercontent.com/simplejuzi/pushup-lite/main/version.json",
-  "https://api.github.com/repos/simplejuzi/pushup-lite/releases/latest"
+  "https://api.github.com/repos/simplejuzi/PUSHUP/releases/latest",
+  "https://fastly.jsdelivr.net/gh/simplejuzi/PUSHUP@main/version.json",
+  "https://ghproxy.net/https://raw.githubusercontent.com/simplejuzi/PUSHUP/main/version.json"
 ];
 const PKEY="fitness_palette_v1";
 /* v1.9：服务器地址（官方直连 / 自建反代） */
@@ -3733,13 +3731,18 @@ function feedMeClick(){if(sMe())openPost();else openAuth();}
    双模式：SB_URL + SB_ANON 留空 → 本地模式（localStorage，可完整点动）
            填好后 → Supabase Auth + REST（轮询，无需 SDK、不改构建脚本）
    ================================================================== */
-const SB_URL_DEFAULT="https://ctcqmjssqineuubadqty.supabase.co";
-const SB_ANON="sb_publishable_5YyGhtbw404N3whh9EhLRw_5DCQnEHT";
+/* 过渡版 v1.29：故意沿用完整版的旧 Supabase 项目 + 根路径反代。
+   老用户的账号在旧库 auth.users，登录态 token 也是旧库签发的，
+   这样覆盖安装后无需重新注册，云端训练记录 / 动态 / 点赞 / 评论全部保留。
+   旧库只需跑一次 transition-legacy-patch.sql（加 emoji 列 + lite_bundle 函数，
+   不删任何表和列），完整版残留数据不受影响。 */
+const SB_URL_DEFAULT="https://zqrlolyntlcewrwfhumd.supabase.co";
+const SB_ANON="sb_publishable_O7AmNzcRHCKtWThXB9_8tg_xWaMoRQU";
 /* v1.9：服务器地址可在「设置 → 服务器」里改，不用重新打包。
    v1.10：国内直连 *.supabase.co 会被 TLS 阻断，所以**默认走自建反代**
    （腾讯云云函数，代码见仓库 supabase-proxy/），装完直接能用；
    想直连官方可以在同一页点「改用官方直连」。 */
-const SB_URL_RELAY="https://1301392226-ickz22vd03.ap-guangzhou.tencentscf.com/lite";
+const SB_URL_RELAY="https://1301392226-ickz22vd03.ap-guangzhou.tencentscf.com";
 const SB_URL_KEY="pushup_sb_url";
 function sbUrlNorm(v){
   let u=String(v||"").trim().replace(/^["'\s]+|["'\s]+$/g,"");
@@ -4941,7 +4944,9 @@ function scheduleSettingsSync(){
 function pullSettings(){
   const me=sMe();if(!me)return Promise.resolve(false);
   if(typeof window!=="undefined"&&window.__PREVIEW_FAKE_SYNC__)return Promise.resolve(false);
-  return sbFetch("/rest/v1/settings?select=*&uid=eq."+me.id+"&limit=1")
+  /* 过渡版连旧库：settings.avatar 存的是完整版的 base64 头像，
+     用 select=* 会把它整块拖回来。永远显式列字段。 */
+  return sbFetch("/rest/v1/settings?select=uid,favs,custom,cats,theme,palette&uid=eq."+me.id+"&limit=1")
     .then(function(rows){
       if(!rows||!rows.length)return false;
       const x=rows[0];

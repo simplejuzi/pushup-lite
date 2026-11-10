@@ -174,14 +174,15 @@ jobs:
           python3 - <<'PY'
           import re
           from pathlib import Path
-          # versionCode 用构建号，保证覆盖安装被识别为「升级」
+          # 过渡版：原 App 的 versionCode 已是 30 左右，必须固定成更大的值，
+          # 否则覆盖安装会被系统判定为降级（INSTALL_FAILED_VERSION_DOWNGRADE）。
           p = Path('android/app/build.gradle')
           s = p.read_text()
-          s2 = re.sub(r'versionCode\s+\d+', 'versionCode ${{ github.run_number }}', s, count=1)
+          s2 = re.sub(r'versionCode\s+\d+', 'versionCode 10000', s, count=1)
           if s2 == s:
               print('未找到 versionCode，跳过（不影响签名一致性）')
           else:
-              print('versionCode 已设为 ${{ github.run_number }}')
+              print('versionCode 已设为 10000')
           import os
           ver = os.environ.get('APP_VER', '1.1')
           s3 = re.sub(r'versionName\s+[\'"][^\'"]*[\'"]', 'versionName "' + ver + '"', s2, count=1)
@@ -269,8 +270,10 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
-      # Release 的版本号与更新日志来自 version.json，不再是「自动构建」的固定话术
+      # 过渡分支：只出 artifact，绝不在 pushup-lite 仓库建 v1.29 Release，
+      # 否则 Lite 主线用户的检查更新会拿到一个装不上的原包名 APK。
       - name: 发布到 Releases
+        if: false
         continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}

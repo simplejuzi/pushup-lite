@@ -1,5 +1,5 @@
 /* PUSHUP Lite · Service Worker：离线可用 */
-const CACHE = "pushup-lite-v3";
+const CACHE = "pushup-transition-v1";
 const ASSETS = [
   "./", "./index.html", "./manifest.webmanifest",
   "./icons/icon-192.png", "./icons/icon-512.png",
