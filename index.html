@@ -1551,9 +1551,18 @@ const APP_CHANGELOG=[
   "云同步请求大幅精简：只在动态页按需同步、字段只取必要的、间隔从 1 秒放到 4 秒",
 ];
 const RELEASE_PAGE="https://github.com/simplejuzi/pushup-lite/releases/latest";
+/* APK 只允许来自本仓库的 Release：第三方镜像万一被篡改，也不至于指向别处 */
+const APK_URL_PREFIX="https://github.com/simplejuzi/pushup-lite/releases/";
+/* 检查更新：国内优先、逐级降级、全部失败保持静默（绝不弹网络错误）。
+   2026-11-10 国内实测：raw.githubusercontent.com / cdn.jsdelivr.net 直连不通，
+   api.github.com 与 github.com 可通；下面两个镜像均返回 200 且带 CORS:*。
+   jsDelivr 直接取 GitHub 仓库内容，作首选；ghproxy 缓存 5 分钟，作备用；
+   最后保留原 GitHub Release 接口，能通时可直接拿到真实 APK 附件地址。
+   注意 jsDelivr 对 @main 有 CDN 缓存（最长约 12h），发版后想立刻生效需在其后台 purge。 */
 const UPDATE_ENDPOINTS=[
-  "https://api.github.com/repos/simplejuzi/pushup-lite/releases/latest",
-  "https://raw.githubusercontent.com/simplejuzi/pushup-lite/main/version.json"
+  "https://fastly.jsdelivr.net/gh/simplejuzi/pushup-lite@main/version.json",
+  "https://ghproxy.net/https://raw.githubusercontent.com/simplejuzi/pushup-lite/main/version.json",
+  "https://api.github.com/repos/simplejuzi/pushup-lite/releases/latest"
 ];
 const PKEY="fitness_palette_v1";
 /* v1.9：服务器地址（官方直连 / 自建反代） */
@@ -3412,8 +3421,10 @@ async function fetchLatest(){
         const asset=(j.assets||[]).find(a=>/\.apk$/i.test(a.name||""));
         return {version:j.tag_name||"",notes:j.body||"",url:asset?asset.browser_download_url:"",name:asset?asset.name:""};
       }
+      const apkUrl=String(j.apkUrl||"");
+      if(apkUrl&&apkUrl.indexOf(APK_URL_PREFIX)!==0)continue;   // 镜像内容异常 → 换下一个源
       return {version:"v"+(j.version||""),notes:(j.changelog||[]).map(x=>"· "+x).join("\n"),
-              url:j.apkUrl||"",name:j.apk||""};
+              url:apkUrl,name:j.apk||""};
     }catch(e){ /* 超时 / 失败：完全静默，绝不弹网络错误 */ }
   }
   return null;
