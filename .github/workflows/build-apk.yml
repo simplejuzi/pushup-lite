@@ -2,6 +2,8 @@ name: 打包 PUSHUP Lite APK
 
 # 触发方式：目前**只支持手动**（Actions 页面 → 本工作流 → Run workflow）。
 # v1.1：接手时按要求先关闭自动构建，避免一 push 就跑 Actions。
+# 2026-11-10：Lite 版已停止更新，**不要 dispatch main 分支**（下面 job 级 if 会整段跳过）。
+#   唯一主线是 transition/legacy-upgrade，产物发到 simplejuzi/PUSHUP 的 Release。
 # 想恢复「push 到 main 自动打包」，把下面 on.push 整段取消注释即可（indent 已对齐）。
 on:
   workflow_dispatch:
@@ -24,6 +26,7 @@ permissions:
 
 jobs:
   build:
+    if: github.ref != 'refs/heads/main'   # main 已冻结：误 dispatch 时整个 job 跳过
     runs-on: ubuntu-latest
     timeout-minutes: 45
 
@@ -269,8 +272,9 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
-      # Release 的版本号与更新日志来自 version.json，不再是「自动构建」的固定话术
+      # Lite 版已停止更新：发布能力停用；误 dispatch main 时上面 job 级 if 已跳过整个构建
       - name: 发布到 Releases
+        if: false
         continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}

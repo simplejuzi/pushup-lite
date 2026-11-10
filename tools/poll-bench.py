@@ -1,20 +1,24 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""PUSHUP Lite · 反代请求量基准测试（不用真机、不连真库）
+"""PUSHUP · 反代请求量基准测试（不用真机、不连真库）
 
 做法：起一个本地假后台冒充 Supabase 反代，把 index.html 复制一份并注入
-「登录态种子 + 把服务器地址指向本地」，再用无头 Chrome 打开，
-统计每个接口被调用了几次、轮询间隔是否真的是 8 秒。
+「登录态种子 + 把服务器地址指向本地」，再用无头 Chrome 打开。
+脚本在 12.4 秒 / 26.4 秒各模拟一次「点底栏动态」（switchTab("feed", true)），
+其余时间静置，用来验证 v1.30 的手动同步语义。
 
 用法：
     python tools/poll-bench.py            # 默认跑 40 秒
     python tools/poll-bench.py 90         # 跑 90 秒
 
 依赖：Python 3.8+、本机装了 Chrome（路径见下方 CHROME 常量）
-预期结果（v1.1）：轮询间隔 8.0 秒，外推 10 分钟约 90 次。
+预期结果（v1.30）：只有冷启动约 2 次一次性请求 + 2 次点击各 1 次 lite_bundle，
+8/16/24/32/40 秒静置期间零请求。停在动态页不动 = 0 次。
 
-⚠️ 不要给 Chrome 传 --virtual-time-budget：虚拟时间会让 setInterval 疯狂推进，
-   8 秒的间隔会被压缩成 0.0 秒，测出来的数字完全失真。
+⚠️ 不要给 Chrome 传 --virtual-time-budget：虚拟时间会让定时器疯狂推进，
+   模拟点击的时刻被压缩成 0.0 秒，测出来的数字完全失真。
+⚠️ 脚本打印的「外推 10 分钟 ≈ N 次」是按这段含人为点击的样本线性算的，
+   手动同步模式下不具备静置意义，别拿它当消耗基准；基准见 PUSHUP-项目汇报-反代消耗.md。
 """
 
 import http.server
@@ -121,8 +125,10 @@ try{localStorage.setItem("pushup_sb_url","http://127.0.0.1:%d");}catch(e){}
 window.__PREVIEW_SEED__={users:[{id:"u1",name:"测试君",emoji:"💪"}],session:"u1",
   posts:[],likes:[],comments:[],token:"faketoken",rtoken:"fakertoken"};
 window.__ERRS__=[];window.addEventListener("error",function(e){window.__ERRS__.push(String(e.message));});
-/* 1.2 秒后切到「动态」页：只有这个页会触发轮询 */
-setTimeout(function(){try{switchTab("feed");}catch(e){window.__ERRS__.push("switch:"+e);}},1200);
+/* v1.30：只有「点底栏」才同步。模拟 12.4s / 26.4s 各点一次「动态」tab，
+   其余时间静置，用来验证「不点不发、点一次发一次」。 */
+setTimeout(function(){try{switchTab("feed",true);}catch(e){window.__ERRS__.push("switch:"+e);}},12400);
+setTimeout(function(){try{switchTab("feed",true);}catch(e){window.__ERRS__.push("switch:"+e);}},26400);
 </script>
 """ % PORT
     TMP.write_text(html.replace("<head>", "<head>" + seed, 1), encoding="utf-8")
@@ -155,10 +161,11 @@ def main():
     for k, v in sorted(COUNT.items(), key=lambda x: -x[1]):
         print("  %-42s %4d" % (k, v))
     print("  合计 %d 次 → 每分钟 %.1f 次" % (total, total * 60.0 / secs))
-    print("  外推 10 分钟 ≈ %d 次" % round(total * 600.0 / secs))
+    print("  ⚠️ 手动同步模式：静置应为 0 次；下面线性外推只代表本段样本，不代表静置")
+    print("  （外推 10 分钟 ≈ %d 次，含人为点击，勿作消耗基准）" % round(total * 600.0 / secs))
     hits = [t for t, k in LOG if "lite_bundle" in k or "/rest/v1/posts" in k]
     if len(hits) > 1:
-        print("  轮询间隔实测:", [round(hits[i + 1] - hits[i], 1) for i in range(len(hits) - 1)])
+        print("  社区同步触发间隔:", [round(hits[i + 1] - hits[i], 1) for i in range(len(hits) - 1)])
 
     srv.shutdown()
     TMP.unlink(missing_ok=True)
