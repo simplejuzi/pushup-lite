@@ -1,11 +1,14 @@
 {
-  "version": "1.30",
-  "tag": "v1.30",
-  "apk": "PUSHUP-v1.30.apk",
-  "apkUrl": "https://github.com/simplejuzi/PUSHUP/releases/download/v1.30/PUSHUP-v1.30.apk",
+  "version": "1.31",
+  "tag": "v1.31",
+  "apk": "PUSHUP-v1.31.apk",
+  "apkUrl": "https://github.com/simplejuzi/PUSHUP/releases/download/v1.31/PUSHUP-v1.31.apk",
   "changelog": [
-    "取消每 8 秒自动拉取，改为点底栏「动态」或下拉刷新时才同步",
-    "停在动态页不再产生后台请求，反代消耗大幅下降",
-    "登录、训练记录同步等一次性请求保持不变"
+    "底栏改成 5 页：记录 / 数据 / 历史 / 动态 / 我的，统计与日历分开",
+    "新增「找朋友」：动态页右上角或「我的」快捷入口，点一行看 TA 的主页",
+    "个人主页扩到四项，显示加入社区时间；训练记录对所有人公开",
+    "空白日只写备注也能保存，休息日不算打卡；保存球不再半透明",
+    "详情页留白 / 返回按钮 / 评论区重排，只有点头像或姓名才进主页",
+    "修复改名换头像不生效；最新体重移到最右并带 kg 单位"
   ]
 }

@@ -397,6 +397,7 @@ body.dark .achip.more,body.dark .fchip.on,body.dark .lib-foot button,body.dark .
 .stat3 .it:last-child{border-right:0}
 .stat3 .v{font-size:20px;font-weight:770;letter-spacing:-.5px}
 .stat3 .k{font-size:10.5px;color:var(--sub);margin-top:4px}
+.stat3 .v small{font-size:10px;font-weight:650;color:var(--sub);margin-left:2px;letter-spacing:0}
 /* v1.12：概览里能点的项（训练记录 / 动作总数） */
 .stat3 .it:active{background:var(--soft)}
 /* v1.12：训练记录列表 —— 简洁到一眼看出哪天练了什么 */
@@ -879,6 +880,98 @@ body.dark .lc-tip span{color:#5C6068;opacity:1}
 .feed-me-txt small{display:block;font-size:11px;color:var(--sub2);margin-top:3px}
 .feed-me-go{font-size:11.5px;font-weight:700;color:var(--accent);white-space:nowrap}
 </style>
+
+<style id="app-ui-v131">
+/* ===== v1.31：动态详情页重排（留白 / 返回 / 评论区） ===== */
+#page-post{--gutter:16px;background:var(--surface)}
+#page-post .pd-top{padding-left:14px;padding-right:14px;border-bottom:1px solid var(--line)}
+#page-post .pd-top-name{font-size:15px;font-weight:700;letter-spacing:.2px}
+#page-post .pd-head{padding:14px var(--gutter) 2px}
+#page-post .pd-scroll{padding:0 var(--gutter) 16px}
+#page-post .pd-bar{padding:10px var(--gutter);padding-bottom:calc(10px + env(safe-area-inset-bottom));gap:8px}
+#page-post .pd-head .fcard{padding:16px;border-radius:20px;box-shadow:0 6px 22px rgba(23,24,28,.05)}
+#page-post .pd-head .ftext{font-size:14.5px;line-height:1.7;margin-top:13px}
+#page-post .pd-like{margin-top:15px;gap:7px;flex-wrap:wrap}
+#page-post .pd-like .lb{font-size:12px;color:var(--sub);font-weight:650}
+#page-post .pd-like.pd-like-who{margin-top:8px}
+#page-post .pd-like .who{background:var(--card);border:1px solid var(--line);padding:4px 10px 4px 5px}
+#page-post .pd-actbar{margin-top:14px;padding-top:13px}
+#page-post .pd-act-comment{font-size:12.5px;color:var(--ink);font-weight:700}
+#page-post .pd-likebtn{padding:7px 14px}
+#page-post .pd-bar input{height:38px;padding:0 15px;font-size:13.5px}
+
+/* 返回按钮：40×40 圆角浅底 + 细箭头，点击区够大、不再是一个小方框 */
+.back-btn{position:absolute;left:14px;top:50%;transform:translateY(-50%);
+  width:40px;height:40px;padding:0;border:1px solid var(--line);background:var(--card);
+  color:var(--ink);border-radius:13px;display:flex;align-items:center;justify-content:center;
+  font-size:22px;cursor:pointer;z-index:4;box-shadow:0 2px 8px rgba(23,24,28,.05);
+  -webkit-tap-highlight-color:transparent;
+  transition:background .15s,box-shadow .15s,transform .15s}
+.back-btn svg{width:19px;height:19px;display:block}
+.back-btn:active{transform:translateY(-50%) scale(.92);background:var(--accent-soft)}
+@media (hover:hover){.back-btn:hover{background:var(--accent-soft);box-shadow:0 3px 12px rgba(var(--accent-rgb),.12)}}
+body.dark .back-btn{box-shadow:none}
+
+/* 评论区：只做轻量的「一条一条」，无标题栏 / 无外框 / 无卡片感，不抢动态正文 */
+.cmt-zone{margin:4px 0 0;background:transparent;border:0;border-radius:0;overflow:visible}
+.cmt-zone-head,.cz-ico,.cz-title,.cz-count{display:none}
+.cmt-zone-body{padding:0;display:block;background:transparent}
+.cmt-item{position:static;display:flex;gap:9px;background:transparent;border:0;
+  border-bottom:1px solid var(--line);border-radius:0;padding:11px 2px;box-shadow:none}
+.cmt-item:last-child{border-bottom:0}
+.cmt-item:before{display:none}
+.ci-av{width:28px;height:28px;flex:none;border-radius:50%;background:var(--accent-soft);
+  display:flex;align-items:center;justify-content:center;font-size:15px;overflow:hidden;cursor:pointer}
+.ci-av img{width:100%;height:100%;object-fit:cover}
+.ci-main{flex:1;min-width:0}
+.ci-head{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.ci-name{font-size:11.5px;font-weight:650;color:var(--sub);cursor:pointer}
+.ci-time{font-size:10px;color:var(--sub2)}
+.ci-del{margin-left:auto;font-size:11px;color:var(--sub2);font-weight:600;cursor:pointer;padding:2px 3px}
+.ci-del:active{color:var(--accent)}
+.ci-text{font-size:13.5px;line-height:1.6;color:var(--ink);margin-top:3px;
+  word-break:break-word;white-space:pre-wrap}
+.cmt-empty{text-align:center;color:var(--sub2);font-size:12px;padding:22px 0}
+.cm-emoji{width:38px;height:38px;flex:none;display:flex;align-items:center;justify-content:center;
+  padding:0;font-size:19px}
+.cm-send{height:38px;padding:0 17px;font-size:13px;font-weight:750;flex:none;
+  box-shadow:0 4px 12px rgba(var(--accent-rgb),.28)}
+/* ===== v6：找朋友 ===== */
+.find-btn{display:inline-flex;align-items:center;gap:6px;flex:none;align-self:center;
+  border:1px solid rgba(var(--accent-rgb),.28);background:var(--accent-soft);color:var(--accent);
+  border-radius:999px;padding:8px 13px;font:inherit;font-size:12px;font-weight:750;
+  cursor:pointer;white-space:nowrap;-webkit-tap-highlight-color:transparent;
+  transition:transform .12s,background .15s,box-shadow .15s}
+.find-btn svg{width:15px;height:15px;display:block}
+.find-btn:active{transform:scale(.95)}
+@media (hover:hover){.find-btn:hover{box-shadow:0 3px 10px rgba(var(--accent-rgb),.14)}}
+.fr-top{position:sticky;top:0;z-index:5;margin:0 -2px 2px}
+.fr-wrap{padding:14px 2px 0}
+.fr-sub{font-size:11.5px;color:var(--sub);margin:9px 2px 14px;line-height:1.5}
+.fr-list{display:flex;flex-direction:column;gap:8px}
+.fr-row{display:flex;align-items:center;gap:12px;background:var(--card);
+  border:1px solid var(--line);border-radius:16px;padding:12px 14px;cursor:pointer;
+  box-shadow:0 2px 8px rgba(23,24,28,.025);transition:transform .12s,background .15s}
+.fr-row:active{transform:scale(.985);background:var(--soft)}
+.fr-av{width:42px;height:42px;flex:none;border-radius:50%;background:var(--accent-soft);
+  display:flex;align-items:center;justify-content:center;font-size:22px;overflow:hidden}
+.fr-main{flex:1;min-width:0}
+.fr-name{font-size:14px;font-weight:750;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fr-meta{font-size:11.5px;color:var(--sub);margin-top:4px}
+.fr-meta b{color:var(--accent);font-weight:750}
+.fr-arw{color:var(--sub2);font-size:19px;flex:none;line-height:1}
+.fr-empty{text-align:center;color:var(--sub2);font-size:12.5px;padding:34px 0}
+
+/* ===== v7：动态卡片精确点击区 + 个人主页资料 ===== */
+.fname.fav-click{display:inline-block;max-width:100%;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;vertical-align:middle;-webkit-tap-highlight-color:transparent}
+#userStats .v{font-size:18px}
+#userStats .k{font-size:10px}
+.user-join{flex:none;align-self:flex-start;text-align:right;font-size:10px;color:var(--sub);
+  line-height:1.5;white-space:nowrap}
+.user-join b{color:var(--ink);font-weight:700;margin-left:3px}
+
+</style>
 </head>
 <body>
 <div class="stage">
@@ -943,43 +1036,18 @@ body.dark .lc-tip span{color:#5C6068;opacity:1}
           <textarea class="note-input" id="noteInput" rows="1" placeholder="状态、感受、分组方式…" oninput="refreshFab()"></textarea>
         </div>
         <div class="save-hint"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v10M8 9l4 4 4-4"/><path d="M4 17c0 2 1.8 3.5 4 3.5h8c2.2 0 4-1.5 4-3.5"/></svg>改动后右下角会出现保存球 · 可上下拖动换位置</div>
-        <div class="privacy">训练记录只有你自己能看 · 可随时导出备份</div>
+        <div class="privacy">训练记录对所有人公开 · 点头像可看别人的 · 可随时导出备份</div>
       </div>
 
-      <!-- ===== 数据：历史日历 + 统计图表合并，页内切换 ===== -->
+      <!-- ===== 数据：只放统计（5 tab 预览） ===== -->
       <div class="page" id="page-data">
         <div class="head-row" style="margin-top:4px">
-          <div><div class="eyebrow">DATA</div><h1 class="title">数据</h1></div>
+          <div><div class="eyebrow">DATA</div><h1 class="title">数据统计</h1></div>
           <div style="display:flex;gap:6px">
-            <div class="badge" id="countBadge" style="display:none">0 条记录</div>
             <div class="badge ok" id="weightBadge">暂无体重记录</div>
           </div>
         </div>
-        <div class="seg-row segbar">
-          <button class="seg-data on" data-k="stats" onclick="setDataView('stats')">数据统计</button>
-          <button class="seg-data" data-k="history" onclick="setDataView('history')">历史日历</button>
-        </div>
-        <div id="histPane" style="display:none">
-          <div class="monthbar">
-            <div class="m" id="monthLabel">—</div>
-            <div style="display:flex;gap:8px"><button class="navbtn" onclick="shiftMonth(-1)">‹</button><button class="navbtn" id="nextMonthBtn" onclick="shiftMonth(1)">›</button></div>
-          </div>
-          <div class="cal-card">
-            <div class="week"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
-            <div class="cal" id="calendar"></div>
-          </div>
-          <div class="sumbar" id="monthSummary"></div>
-          <div class="detail" id="dayDetail"></div>
-          <div class="sec-title">训练记录<span>点一条可编辑 / 补录</span></div>
-          <div class="filters" id="recRangeFilters" style="margin-top:10px">
-            <button class="fchip" data-r="all" onclick="setRecRange('all')">全部</button>
-            <button class="fchip on" data-r="7" onclick="setRecRange('7')">近七天</button>
-            <button class="fchip" data-r="30" onclick="setRecRange('30')">一个月</button>
-          </div>
-          <div class="list" id="recordList"></div>
-          <div style="height:10px"></div>
-        </div>
-        <div id="statsPane">
+<div id="statsPane">
           <div class="kpis" id="kpis"></div>
           <div class="chart-card">
             <div class="chart-head"><span class="t">每日俯卧撑</span><span class="x" id="peakLabel">峰值 <b>—</b> 个</span></div>
@@ -999,7 +1067,38 @@ body.dark .lc-tip span{color:#5C6068;opacity:1}
           <div class="muted" style="margin:14px 4px 0">正式版会为每个动作单独出趋势图；当前图表以俯卧撑为主项。</div>
           <div style="height:10px"></div>
         </div>
-        <div style="height:80px"></div>
+                <div style="height:80px"></div>
+      </div>
+
+      <!-- ===== 历史：日历 + 训练记录列表（5 tab 预览） ===== -->
+      <div class="page" id="page-history">
+        <div class="head-row" style="margin-top:4px">
+          <div><div class="eyebrow">HISTORY</div><h1 class="title">历史日历</h1></div>
+          <div style="display:flex;gap:6px">
+            <div class="badge" id="countBadge">0 条记录</div>
+          </div>
+        </div>
+<div id="histPane">
+          <div class="monthbar">
+            <div class="m" id="monthLabel">—</div>
+            <div style="display:flex;gap:8px"><button class="navbtn" onclick="shiftMonth(-1)">‹</button><button class="navbtn" id="nextMonthBtn" onclick="shiftMonth(1)">›</button></div>
+          </div>
+          <div class="cal-card">
+            <div class="week"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
+            <div class="cal" id="calendar"></div>
+          </div>
+          <div class="sumbar" id="monthSummary"></div>
+          <div class="detail" id="dayDetail"></div>
+          <div class="sec-title">训练记录<span>点一条可编辑 / 补录</span></div>
+          <div class="filters" id="recRangeFilters" style="margin-top:10px">
+            <button class="fchip" data-r="all" onclick="setRecRange('all')">全部</button>
+            <button class="fchip on" data-r="7" onclick="setRecRange('7')">近七天</button>
+            <button class="fchip" data-r="30" onclick="setRecRange('30')">一个月</button>
+          </div>
+          <div class="list" id="recordList"></div>
+          <div style="height:10px"></div>
+        </div>
+                <div style="height:80px"></div>
       </div>
 
       <!-- ===== 动作库 ===== -->
@@ -1027,6 +1126,9 @@ body.dark .lc-tip span{color:#5C6068;opacity:1}
         <div class="feed-head">
           <div class="head-row" style="margin-top:4px">
             <div><div class="eyebrow">COMMUNITY</div><h1 class="title">动态</h1></div>
+            <button class="find-btn" onclick="openFriends('feed')" aria-label="找朋友">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><path d="M16 5.4a3 3 0 0 1 0 5.6"/><path d="M17.4 14.1c2.1.5 3.6 2.3 3.6 4.9"/></svg>找朋友
+            </button>
           </div>
           <div class="netbar hide">
             <span class="nb-ic">⚠️</span>
@@ -1047,7 +1149,7 @@ body.dark .lc-tip span{color:#5C6068;opacity:1}
       <!-- ===== v1.13：动态详情（图文 + 谁点赞 + 谁评论，评论只能在这里发） ===== -->
       <div class="page" id="page-post">
         <div class="pd-top">
-          <button class="back-btn" onclick="closePostDetail()" aria-label="返回">‹</button>
+          <button class="back-btn" onclick="closePostDetail()" aria-label="返回"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
           <div class="pd-top-name">动态详情</div>
         </div>
         <div id="pdHead" class="pd-head"></div>
@@ -1055,6 +1157,23 @@ body.dark .lc-tip span{color:#5C6068;opacity:1}
         <!-- v1.28：评论输入条改为详情页 flex 列的一部分（正常流），
              评论区 flex:1 自动精确填满到输入框上沿，自适应任意屏幕尺寸 -->
         <div class="pd-bar" id="pdBar" hidden></div>
+      </div>
+
+      <!-- ===== v6：找朋友（所有用户列表；从哪进返回哪去） ===== -->
+      <div class="page" id="page-friends">
+        <div class="pd-top fr-top">
+          <button class="back-btn" onclick="closeFriends()" aria-label="返回">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+          </button>
+          <div class="pd-top-name">找朋友</div>
+        </div>
+        <div class="fr-wrap">
+          <div class="eyebrow">COMMUNITY</div>
+          <h1 class="title" style="margin-top:6px">一起练的人</h1>
+          <div class="fr-sub" id="friendsSub">正在加载…</div>
+          <div id="friendsList"></div>
+          <div style="height:70px"></div>
+        </div>
       </div>
 
       <!-- ===== v1.5 我的动态（独立二级页，从我的页进入） ===== -->
@@ -1113,13 +1232,14 @@ body.dark .lc-tip span{color:#5C6068;opacity:1}
 
         <div class="sec-title">快捷入口</div>
         <div class="settings">
+          <div class="sitem" onclick="openFriends('profile')">找朋友<span class="r">看看大家练了几天 <span class="ar">›</span></span></div>
           <div class="sitem" onclick="openMyPosts()">我的动态<span class="r">只看自己发的 <span class="ar">›</span></span></div>
           <div class="sitem" onclick="switchTab('settings')">设置<span class="r">外观 / 配色 / 数据 / 关于 <span class="ar">›</span></span></div>
         </div>
         <div style="height:80px"></div>
       </div>
 
-      <!-- ===== v1.12：训练记录（简洁列表，可看自己，也可看别人公开的部分） ===== -->
+      <!-- ===== 训练记录（简洁列表，自己和其他人的都能看，对所有人公开） ===== -->
       <div class="page" id="page-recs">
         <div class="head-row" style="margin-top:4px">
           <div><div class="eyebrow">RECORDS</div><h1 class="title" id="recsTitle">训练记录</h1></div>
@@ -1208,6 +1328,7 @@ body.dark .lc-tip span{color:#5C6068;opacity:1}
     <div class="tabbar" id="tabbar">
       <button class="tab on" id="tab-record" onclick="switchTab('record',true)"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>记录</button>
       <button class="tab" id="tab-data" onclick="switchTab('data',true)"><svg viewBox="0 0 24 24"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>数据</button>
+      <button class="tab" id="tab-history" onclick="switchTab('history',true)"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18"/></svg>历史</button>
       <button class="tab" id="tab-feed" onclick="switchTab('feed',true)"><svg viewBox="0 0 24 24"><path d="M4 5h16v12H8l-4 3V5z"/><path d="M8 9h8M8 13h5"/></svg>动态</button>
       <button class="tab" id="tab-profile" onclick="switchTab('profile',true)"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6"/></svg>我的</button>
     </div>
@@ -1542,12 +1663,15 @@ const lvCls={"入门":"b","进阶":"i","高阶":"a"};
 const isTime=u=>u==="秒";
 
 /* ============ v1.1：版本、主题、更新 ============ */
-const APP_VERSION="v1.30";
+const APP_VERSION="v1.31";
 /* 应用内更新日志：与 version.json 的 changelog 完全一致 */
 const APP_CHANGELOG=[
-  "取消每 8 秒自动拉取，改为点底栏「动态」或下拉刷新时才同步",
-  "停在动态页不再产生后台请求，反代消耗大幅下降",
-  "登录、训练记录同步等一次性请求保持不变"
+  "底栏改成 5 页：记录 / 数据 / 历史 / 动态 / 我的，统计与日历分开",
+  "新增「找朋友」：动态页右上角或「我的」快捷入口，点一行看 TA 的主页",
+  "个人主页扩到四项，显示加入社区时间；训练记录对所有人公开",
+  "空白日只写备注也能保存，休息日不算打卡；保存球不再半透明",
+  "详情页留白 / 返回按钮 / 评论区重排，只有点头像或姓名才进主页",
+  "修复改名换头像不生效；最新体重移到最右并带 kg 单位"
 ];
 /* 过渡版 v1.29：这个包覆盖安装在原 PUSHUP App 上，包名是 com.simplejuzi.pushup。
    更新检查必须继续指向原仓库 simplejuzi/PUSHUP，否则收不到后续版本。
@@ -1769,7 +1893,7 @@ function switchTab(name,fromTabBar){
   document.getElementById("page-"+name).classList.add("on");
   const _tb=document.getElementById("tab-"+name);
   if(_tb)_tb.classList.add("on");
-  else{const _p=(name==="settings"||name==="myposts"||name==="recs")?"profile":(name==="library"?"record":"feed");
+  else{const _p=(name==="settings"||name==="myposts"||name==="recs")?"profile":(name==="library"?"record":(name==="friends"?(SUB_PARENT.friends==="profile"?"profile":"feed"):"feed"));
        const _pe=document.getElementById("tab-"+_p);if(_pe)_pe.classList.add("on");}
   document.getElementById("libFoot").classList.toggle("hide",!(name==="library"&&libDirty));
   if(name==="record")refreshFab();else setFabVisible(false);   /* v1.7：只在记录页 + 有改动时出现 */
@@ -1783,9 +1907,10 @@ function switchTab(name,fromTabBar){
   /* 动态页 / 详情页锁住外层滚动，内容区内部独立滚动 */
   document.body.classList.toggle("feed-lock",(name==="feed"||name==="post"));
   if(name!=="post")hidePdBar();          /* 评论条只在详情页出现 */
-  if(name==="data"){if(dataView==="history")renderHistory();else renderStats();}
+  if(name==="data")renderStats();
+  if(name==="history")renderHistory();
   if(name==="library")renderLibrary();
-  if(name==="record"||name==="data")pullRecordsThrottled();
+  if(name==="record")pullRecordsThrottled();   /* 预览优化：数据/历史是纯本地计算，切 tab 不拉云端 */
   if(name==="record"){
     if(keepDateOnce){keepDateOnce=false;}
     else{curDate=todayStr();}
@@ -1808,7 +1933,7 @@ function renderAll(){fillRecord();renderStats();renderHistory();renderLibrary();
    Native（MainActivity.onBackPressed）会调 window.__pushupBack()：
    返回 true  = 网页自己处理了（关弹窗 / 回上一级），别退出 App
    返回 false = 已经在记录首页，允许退出（退出前做了「再按一次」防误触） */
-const SUB_PARENT={library:"record",myposts:"profile",user:"feed",settings:"profile",recs:"profile",post:"feed"};
+const SUB_PARENT={library:"record",myposts:"profile",user:"feed",settings:"profile",recs:"profile",post:"feed",friends:"feed"};
 const BACK_MODALS=[
   ["emojiPanel",function(){const m=document.getElementById("emojiPanel");if(m)m.classList.remove("on");}],
   ["breakModal",closeBreakthrough],
@@ -1850,11 +1975,7 @@ function handleAppBack(){
     switchTab(SUB_PARENT[cur]);
     return true;
   }
-  /* 3. 数据页在「数据统计」时先回「历史日历」 */
-  if(cur==="data"&&typeof dataView!=="undefined"&&dataView==="history"){
-    setDataView("stats");          /* 统计是主视图，历史日历按返回先退回统计 */
-    return true;
-  }
+  /* 3. 5 tab 预览：不再有页内二级视图，其它 Tab 一律回记录页 */
   /* 4. 别的 Tab 回到记录页 */
   if(cur!=="record"){
     switchTab("record");
@@ -1882,16 +2003,12 @@ window.__pushupBack=handleAppBack;
    数据页的两个子视图也算在序列里、而且优先于底栏：
    「历史日历」左滑先到「数据统计」，再左滑才去「动态」；
    反过来在「数据统计」右滑先回记录页。 */
-const SWIPE_SEQ=["record","data:stats","data:history","feed:all","feed:friends","chats","profile"];
+const SWIPE_SEQ=["record","data","history","feed","profile"];
 function swipeIndexAt(page,view){
-  if(page==="data")return (view==="history")?2:1;
-  if(page==="feed")return (view==="friends")?4:3;   /* v1.16：动态页滑动 = 切全部 / 好友 */
   return SWIPE_SEQ.indexOf(page);
 }
 function swipeIndex(){
-  const pg=currentPageName();
-  return swipeIndexAt(pg,pg==="feed"?(typeof feedFilter!=="undefined"?feedFilter:"")
-                                   :(typeof dataView!=="undefined"?dataView:""));
+  return swipeIndexAt(currentPageName());
 }
 function swipeIgnore(t){
   let n=t;
@@ -1913,11 +2030,7 @@ function goSwipe(dir){
   const j=i+dir;
   if(j<0||j>=SWIPE_SEQ.length)return;
   const target=SWIPE_SEQ[j];
-  if(target==="data:stats"){switchTab("data");setDataView("stats");}
-  else if(target==="data:history"){switchTab("data");setDataView("history");}
-  else if(target==="feed:all"){switchTab("feed");setFeedFilter("all");}
-  else if(target==="feed:friends"){switchTab("feed");setFeedFilter("friends");}
-  else switchTab(target);
+  switchTab(target);   /* 滑动切页不触发云端同步 */
 }
 function bindSwipe(){
   const sc=document.getElementById("screen");
@@ -1976,7 +2089,7 @@ function fillRecord(){
   if(nextBtn)nextBtn.disabled=isToday;             // 今天时右翻按钮灰掉
   document.getElementById("recEyebrow").textContent=fmtMD(curDate)+" "+wdOf(curDate);
   document.getElementById("dateLabel").innerHTML=(isToday?"今天":"补录")+" · "+fmtMD(curDate)+"<small>"+(r?"已有记录，可直接修改":"还没有记录，填完保存即可")+"</small>";
-  if(r)todayRows=(r.items&&r.items.length)?r.items.map(i=>({id:i.id,v:i.v})):[{id:"pushup",v:r.p}];
+  if(r)todayRows=(r.items&&r.items.length)?r.items.map(i=>({id:i.id,v:i.v})):(hasWorkout(r)?[{id:"pushup",v:r.p}]:[{id:"pushup",v:null}]);
   else todayRows=[{id:"pushup",v:null}];   // 默认只放一行俯卧撑（空输入，不写入任何数据）
   const wEl=document.getElementById("weightInput"),aEl=document.getElementById("armInput");
   wEl.placeholder="—";aEl.placeholder="—";
@@ -2042,9 +2155,11 @@ function addRow(id){if(todayRows.some(r=>r.id===id)){toast("这个动作已经�
 function removeRow(i){todayRows.splice(i,1);renderToday();refreshFab();}
 function saveRecord(){
   const items=todayRows.filter(x=>x.v!=null&&x.v>0).map(x=>{const e=exById(x.id);return {id:x.id,v:Number(x.v),u:e.u,n:e.n};});
-  if(!items.length){toast("至少填一个动作的数值");fabNope();return;}
   const w=parseFloat(document.getElementById("weightInput").value),a=parseFloat(document.getElementById("armInput").value);
   const note=document.getElementById("noteInput").value.trim();
+  /* v5：休息日只写备注也要能保存 —— 没有动作数值时不再一刀切拦掉 */
+  const hasMeta=!!note||!isNaN(w)||!isNaN(a);
+  if(!items.length&&!hasMeta){toast("填个动作数值，或写点备注再保存");fabNope();return;}
   const push=items.find(x=>x.id==="pushup");
   const pushSum=items.filter(x=>(exById(x.id)||{}).c==="push").reduce((s,x)=>s+x.v,0);
   const obj={d:curDate,p:push?push.v:pushSum,items:items};
@@ -2055,7 +2170,7 @@ function saveRecord(){
   TMAP[curDate]=Date.now();
   saveAll();
   syncRecordNow(curDate);
-  toast(sMe()?("已保存 · "+fmtMD(curDate)+" "+items.length+" 个动作")
+  toast(sMe()?("已保存 · "+fmtMD(curDate)+" "+(items.length?items.length+" 个动作":"仅备注"))
             :"已保存 · 登录后自动同步到账号");
   fabFlash();
   setTimeout(refreshFab,1250);             /* 让「已保存」闪完再收起保存球 */
@@ -2070,6 +2185,10 @@ function recSigNow(){
   const a=(aEl&&String(aEl.value).trim()!=="")?Number(aEl.value):null;
   const n=(nEl&&nEl.value)?String(nEl.value).trim():"";
   return items+"#"+w+"#"+a+"#"+n;
+}
+/* v5：只写备注的休息日不算训练日，统计 / 连续天数都要排除它 */
+function hasWorkout(r){
+  return !!r&&(Number(r.p)>0||(r.items&&r.items.some(function(x){return Number(x.v)>0;})));
 }
 function recSigSaved(r){
   if(!r)return "#null#null#";
@@ -2189,13 +2308,7 @@ function initFab(){
   el.addEventListener("pointercancel",end);
   window.addEventListener("resize",applyFabPos);
   window.addEventListener("orientationchange",()=>setTimeout(applyFabPos,260));
-  /* 输入框获得焦点（键盘弹出）时先让开，别挡住正在改的数字 */
-  document.addEventListener("focusin",e=>{
-    const t=e&&e.target;
-    /* v1.15：只有球本来就露在外面时才让路；已收起（不在记录页 / 没改动）就别动它 */
-    if(t&&(t.tagName==="INPUT"||t.tagName==="TEXTAREA")&&!el.classList.contains("hide"))el.classList.add("dim");
-  });
-  document.addEventListener("focusout",()=>el.classList.remove("dim"));
+  /* v5：输入框聚焦时不再把保存球变半透明（原来会冒出一个半透明的「更新」，很干扰） */
 }
 
 /* ============ 历史页 ============ */
@@ -2207,8 +2320,9 @@ function shiftMonth(delta){
 }
 /* v1.7：连续打卡天数（从今天往前数，没记录就是 0），历史页与统计页共用同一套算法 */
 function streakDays(){
-  if(!DATA.length)return 0;
-  const set=new Set(DATA.map(r=>r.d));
+  const WORK=DATA.filter(hasWorkout);
+  if(!WORK.length)return 0;
+  const set=new Set(WORK.map(r=>r.d));
   const k=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
   let cur=parseD(todayStr()),n=0;
   while(set.has(k(cur))){n++;cur.setDate(cur.getDate()-1);}
@@ -2248,17 +2362,17 @@ function renderHistory(){
     if(future){
       html+='<div class="'+cls+'" aria-disabled="true"><span class="dn">'+d+'</span></div>';
     }else{
-      html+='<div class="'+cls+'" onclick="pickDate(\''+ds+'\')"><span class="dn">'+d+'</span>'+(r?'<span class="cv">'+r.p+'</span>':'')+'</div>';
+      html+='<div class="'+cls+'" onclick="pickDate(\''+ds+'\')"><span class="dn">'+d+'</span>'+(r?'<span class="cv">'+(hasWorkout(r)?r.p:'休')+'</span>':'')+'</div>';
     }
   }
   document.getElementById("calendar").innerHTML=html;
   const monthRows=DATA.filter(r=>r.d.startsWith(y+"-"+String(m).padStart(2,"0")));
   const total=monthRows.reduce((s,r)=>s+r.p,0);
   document.getElementById("monthSummary").innerHTML=
-    '<div class="it"><div class="v">'+DATA.length+'</div><div class="k">训练天数</div></div>'+
+    '<div class="it"><div class="v">'+DATA.filter(hasWorkout).length+'</div><div class="k">训练天数</div></div>'+
     '<div class="it"><div class="v">'+streakDays()+'</div><div class="k">连续天数</div></div>'+
     '<div class="it"><div class="v">'+total+'</div><div class="k">本月累计</div></div>'+
-    '<div class="it"><div class="v">'+(monthRows.length?Math.round(total/monthRows.length):0)+'</div><div class="k">日均</div></div>';
+    '<div class="it"><div class="v">'+(monthRows.filter(hasWorkout).length?Math.round(total/monthRows.filter(hasWorkout).length):0)+'</div><div class="k">日均</div></div>';
   renderDayDetail();
   renderRecRangeList();
 }
@@ -2292,9 +2406,11 @@ function renderRecRangeList(){
     if(r.w!=null)tags.push('<span class="tag">'+r.w.toFixed(2)+' kg</span>');
     if(r.a!=null)tags.push('<span class="tag">臂围 '+r.a+' cm</span>');
     const extra=(r.items&&r.items.length>1)?'<span class="tag">共 '+r.items.length+' 个动作</span>':"";
+    const rest=!hasWorkout(r);
+    if(rest&&r.note)tags.push('<span class="tag">'+sEsc(r.note)+'</span>');
     if(!tags.length&&!extra)tags.push('<span class="tag" style="background:transparent;color:var(--sub2)">仅俯卧撑</span>');
     return '<div class="row" onclick="editFrom(\''+r.d+'\')"><div class="dt"><div class="dd">'+fmtSlash(r.d)+'</div><div class="dw">'+wdOf(r.d)+'</div></div>'+
-      '<div class="pv">'+r.p+'<small>个</small></div><div class="tags">'+extra+tags.join("")+'</div><div class="arrow">›</div></div>';
+      '<div class="pv">'+(rest?'休息':r.p+'<small>个</small>')+'</div><div class="tags">'+extra+tags.join("")+'</div><div class="arrow">›</div></div>';
   }).join(""):'<div class="muted" style="text-align:center;padding:24px">'+empty+'</div>';
 }
 
@@ -2307,8 +2423,10 @@ function renderDayDetail(){
     return;
   }
   if(!r){box.innerHTML='<div class="dh"><span>'+fmtMD(selDate)+' '+wdOf(selDate)+'</span><span>无记录</span></div><div style="font-size:12.5px;color:var(--sub);line-height:1.6">这天休息了。想补录的话，点下面的按钮。</div><div style="margin-top:12px"><button class="edit" onclick="editFrom(\''+selDate+'\')">＋ 补录这天</button></div>';return;}
-  const items=(r.items&&r.items.length)?r.items:[{id:"pushup",v:r.p,u:"个"}];
-  let cards=items.slice(0,6).map(i=>{const e=exById(i.id);return '<div class="di"><div class="k">'+(i.n||e.n)+'</div><div class="v">'+i.v+'<small>'+normUnit(i.u||e.u)+'</small></div></div>';}).join("");
+  const rest=!hasWorkout(r);
+  const items=rest?[]:((r.items&&r.items.length)?r.items:[{id:"pushup",v:r.p,u:"个"}]);
+  let cards=rest?'<div class="di"><div class="k">休息</div><div class="v">—</div></div>'
+      :items.slice(0,6).map(i=>{const e=exById(i.id);return '<div class="di"><div class="k">'+(i.n||e.n)+'</div><div class="v">'+i.v+'<small>'+normUnit(i.u||e.u)+'</small></div></div>';}).join("");
   if(r.w!=null)cards+='<div class="di"><div class="k">体重</div><div class="v">'+r.w.toFixed(2)+'<small>kg</small></div></div>';
   if(r.a!=null)cards+='<div class="di"><div class="k">臂围</div><div class="v">'+r.a+'<small>cm</small></div></div>';
   box.innerHTML='<div class="dh"><span>'+fmtMD(selDate)+' '+wdOf(selDate)+'</span><button class="edit" onclick="editFrom(\''+selDate+'\')">编辑</button></div><div class="dg">'+cards+'</div>'+(r.note?'<div style="font-size:11.5px;color:var(--sub);margin-top:12px">备注：'+r.note+'</div>':'');
@@ -2317,8 +2435,9 @@ function editFrom(ds){curDate=ds>todayStr()?todayStr():ds;keepDateOnce=true;swit
 
 /* ============ 数据页（本轮未改动，仅网格线变量化） ============ */
 function renderStats(){
-  /* 清空数据后 DATA 为空：直接渲染空状态，避免图表对空数组取最大值/除零而报错 */
-  if(!DATA.length){
+  const WORK=DATA.filter(hasWorkout);
+  /* 没有任何训练量（可能只有休息备注）：直接渲染空状态，避免除零 */
+  if(!WORK.length){
     const kpi0=(k,v,u,s,hl)=>'<div class="kpi'+(hl?" hl":"")+'"><div class="k">'+k+'</div><div class="v">'+v+'<small>'+u+'</small></div><div class="s">'+s+'</div></div>';
     document.getElementById("kpis").innerHTML=
       kpi0("累计俯卧撑",0,"个","0 天打卡",true)+kpi0("日均",0,"个","还没有数据",false)+
@@ -2327,21 +2446,21 @@ function renderStats(){
     const empty='<div class="muted" style="text-align:center;padding:34px 10px;font-size:12.5px">还没有记录，去「记录」页保存第一条吧</div>';
     document.getElementById("barChart").innerHTML=empty;
     document.getElementById("lineChart").innerHTML=empty;
-    document.getElementById("inspect").innerHTML='<div class="ins-empty">暂无数据 · 从零开始</div>';
+    renderInspect();   /* 只有休息备注时，当天明细仍要显示备注 */
     weightRows=[];weightPts=[];weightTipIdx=-1;
     renderStatsMeta();
     return;
   }
-  const total=DATA.reduce((s,r)=>s+r.p,0),avg=Math.round(total/DATA.length),best=Math.max(...DATA.map(r=>r.p));
-  const set=new Set(DATA.map(r=>r.d));let cur=parseD(TODAY),streak=0;
+  const total=WORK.reduce((s,r)=>s+r.p,0),avg=Math.round(total/WORK.length),best=Math.max(...WORK.map(r=>r.p));
+  const set=new Set(WORK.map(r=>r.d));let cur=parseD(TODAY),streak=0;
   const key=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
   while(set.has(key(cur))){streak++;cur.setDate(cur.getDate()-1);}
   const kpi=(k,v,u,s,hl)=>'<div class="kpi'+(hl?" hl":"")+'"><div class="k">'+k+'</div><div class="v">'+v.toLocaleString()+'<small>'+u+'</small></div><div class="s">'+s+'</div></div>';
   const slash2=d=>d.slice(5).replace("-","/");
-  const bestDates=DATA.filter(r=>r.p===best).map(r=>slash2(r.d)).join(" 与 ");
+  const bestDates=WORK.filter(r=>r.p===best).map(r=>slash2(r.d)).join(" 与 ");
   const stD=parseD(TODAY);stD.setDate(stD.getDate()-Math.max(0,streak-1));
   const streakStart=slash2(key(stD))+" 起";
-  document.getElementById("kpis").innerHTML=kpi("累计俯卧撑",total,"个",DATA.length+" 天打卡",true)+kpi("日均",avg,"个","最高单日 "+best,false)+kpi("单日最高",best,"个",bestDates,false)+kpi("连续打卡",streak,"天",streakStart,false);
+  document.getElementById("kpis").innerHTML=kpi("累计俯卧撑",total,"个",WORK.length+" 天打卡",true)+kpi("日均",avg,"个","最高单日 "+best,false)+kpi("单日最高",best,"个",bestDates,false)+kpi("连续打卡",streak,"天",streakStart,false);
   document.getElementById("streakText").textContent=streakText();
   const rows=[...DATA].sort((a,b)=>a.d.localeCompare(b.d)),W=342,H=132,maxV=Math.max(1,...rows.map(r=>r.p||0));
   if(rows.length){
@@ -2456,8 +2575,10 @@ function renderInspect(){
   const r=byDate(statDate),box=document.getElementById("inspect");
   const head='<div class="ins-head"><button onclick="shiftStatDate(-1)">‹</button><div class="ins-d"><b>'+fmtMD(statDate)+'</b> '+wdOf(statDate)+'<small>当天详细记录 · 可左右切换</small></div><button onclick="shiftStatDate(1)">›</button></div>';
   if(!r){box.innerHTML=head+'<div class="ins-empty">这天没有记录 · 休息日</div>';return;}
-  const items=(r.items&&r.items.length)?r.items:[{id:"pushup",v:r.p,u:"个",n:"标准俯卧撑"}];
-  const irs=items.map(i=>{const e=exById(i.id);return '<div class="ins-row"><span class="ins-nm">'+(i.n||e.n)+'</span><span class="ins-v">'+i.v+' <small>'+normUnit(i.u||e.u)+'</small></span></div>';}).join("");
+  const rest=!hasWorkout(r);
+  const items=rest?[]:((r.items&&r.items.length)?r.items:[{id:"pushup",v:r.p,u:"个",n:"标准俯卧撑"}]);
+  const irs=rest?'<div class="ins-row"><span class="ins-nm">休息</span><span class="ins-v">—</span></div>'
+      :items.map(i=>{const e=exById(i.id);return '<div class="ins-row"><span class="ins-nm">'+(i.n||e.n)+'</span><span class="ins-v">'+i.v+' <small>'+normUnit(i.u||e.u)+'</small></span></div>';}).join("");
   const met=[];
   if(r.w!=null)met.push('<span>体重 '+r.w.toFixed(2)+' kg</span>');
   if(r.a!=null)met.push('<span>臂围 '+r.a+' cm</span>');
@@ -2600,10 +2721,10 @@ function renderProfile(){
   const av=document.getElementById("aboutVersion");if(av)av.textContent=APP_VERSION+" · Lite";
   const cv=document.getElementById("curVersion");if(cv)cv.textContent=APP_VERSION;
 }
-/* ============ v1.12：训练记录页 ============
-   一张简洁列表：左边日期，右边「总个数 + 动作小标签」，一眼看出哪天练了什么。
-   自己的记录来自本机；别人的只能看到 TA 发动态时公开的那部分训练成果
-   （records 表是本人私有的，数据库层面就读不到别人的）。 */
+/* ============ 训练记录页 ============
+   一张简洁列表：左边日期，右边「总个数 + 动作小标签」。
+   自己的记录来自本机 DATA；可经 /rest/v1/records 读取别人的真实记录（对所有人公开），
+   没拉到时才回退到 TA 发动态时附带的 workout 快照。 */
 let RECS_UID="",RECS_BACK="profile";
 function openRecords(uid){
   const from=(typeof currentPageName==="function")?currentPageName():"profile";
@@ -2616,6 +2737,62 @@ function openRecords(uid){
   switchTab("recs");
 }
 function closeRecords(){switchTab(RECS_BACK||"profile");}
+
+/* ============ v6：找朋友（所有用户列表） ============
+   返回：SUB_PARENT.friends 记录来路（feed / profile），左上角与系统返回键都走它；
+   从好友页点进用户主页时，openUserProfile 会把 USER_BACK 记成 friends，天然回到这里。 */
+let FRIENDS_BACK="feed",FRIENDS_STATS=null,_friendsLoading=false;
+function openFriends(from){
+  const cur=(typeof currentPageName==="function")?currentPageName():"feed";
+  FRIENDS_BACK=(from&&from!=="friends")?from:((cur==="friends")?"feed":(SUB_PARENT.friends||"feed"));
+  SUB_PARENT.friends=FRIENDS_BACK;
+  renderFriends();
+  switchTab("friends");
+  loadFriendsStats().then(function(){
+    const pg=document.getElementById("page-friends");
+    if(pg&&pg.classList.contains("on"))renderFriends();
+  });
+}
+function closeFriends(){switchTab(SUB_PARENT.friends||FRIENDS_BACK||"feed");}
+/* 一次批量取所有人的 (uid,d)，会话内缓存：不加轮询、不按人逐个请求 */
+function loadFriendsStats(force){
+  if(FRIENDS_STATS&&!force)return Promise.resolve(FRIENDS_STATS);
+  if(_friendsLoading)return Promise.resolve(FRIENDS_STATS||{});
+  if(!CLOUD())return Promise.resolve(FRIENDS_STATS={});
+  _friendsLoading=true;
+  return sbFetch("/rest/v1/records?select=uid,d").then(function(rows){
+    const m={};
+    if(Array.isArray(rows))rows.forEach(function(x){
+      if(!x||!x.uid||!x.d)return;
+      if(!m[x.uid])m[x.uid]={};
+      m[x.uid][x.d]=1;
+    });
+    const me=sMe();
+    if(me){const self={};DATA.filter(hasWorkout).forEach(function(r){self[r.d]=1;});m[me.id]=self;}
+    FRIENDS_STATS=m;_friendsLoading=false;return m;
+  }).catch(function(){_friendsLoading=false;FRIENDS_STATS={};return {};});
+}
+function friendDays(uid){
+  if(FRIENDS_STATS&&FRIENDS_STATS[uid])return Object.keys(FRIENDS_STATS[uid]).length;
+  return (typeof userWorkoutDays==="function")?userWorkoutDays(uid):0;
+}
+function renderFriends(){
+  const box=document.getElementById("friendsList");if(!box)return;
+  const s=sLoad(),me=sMe();
+  const users=(s.users||[]).filter(function(u){return u&&u.id&&(!me||u.id!==me.id);});
+  const sub=document.getElementById("friendsSub");
+  if(sub)sub.textContent="共 "+users.length+" 位训练伙伴 · 点一行看 TA 的主页";
+  if(!users.length){box.innerHTML='<div class="fr-empty">还没有其他训练伙伴</div>';return;}
+  box.innerHTML='<div class="fr-list">'+users.map(function(u){
+    const days=friendDays(u.id);
+    const posts=(s.posts||[]).filter(function(p){return p&&p.uid===u.id;}).length;
+    return '<div class="fr-row" onclick="openUserProfile(\''+sEsc(u.id)+'\')">'+
+      '<div class="fr-av">'+sEsc(u.emoji||u.avatar||"💪")+'</div>'+
+      '<div class="fr-main"><div class="fr-name">'+sEsc(u.name||"训练伙伴")+'</div>'+
+      '<div class="fr-meta">训练 <b>'+days+'</b> 天 · <b>'+posts+'</b> 条动态</div></div>'+
+      '<div class="fr-arw">›</div></div>';
+  }).join("")+'</div>';
+}
 
 /* ============ v1.22：用户主页（点头像/名字进入） ============ */
 let USER_UID="",USER_BACK="feed";
@@ -2644,20 +2821,78 @@ function userWorkoutDays(uid){
   return Object.keys(seen).length;
 }
 let USER_VIEW="recs";
+/* ============ v7：个人主页四项统计 + 加入社区时间 ============ */
+function userPostCount(uid){return (sLoad().posts||[]).filter(function(p){return p&&p.uid===uid;}).length;}
+function userJoined(uid){
+  const u=sUser(uid)||{};
+  const raw=u.joined||u.created_at||"";
+  if(!raw)return "—";
+  const m=String(raw).match(/(\d{4})[-年\/](\d{1,2})[-月\/](\d{1,2})/);
+  return m?(m[1]+"年"+Number(m[2])+"月"+Number(m[3])+"日"):String(raw);
+}
+/* 聚合 RPC 不带 created_at：只在用户主动打开他人主页时批量补一次，会话内缓存。
+   显式两列、limit 200，不进任何定时器，也不按人逐个请求。 */
+let JOIN_CACHE=null,_joinLoading=false;
+function loadJoinTimes(){
+  if(JOIN_CACHE)return Promise.resolve(JOIN_CACHE);
+  if(_joinLoading)return Promise.resolve({});
+  if(!CLOUD())return Promise.resolve(JOIN_CACHE={});
+  _joinLoading=true;
+  return sbFetch("/rest/v1/profiles?select=id,created_at&limit=200").then(function(rows){
+    const m={};
+    if(Array.isArray(rows))rows.forEach(function(x){if(x&&x.id)m[x.id]=x.created_at;});
+    JOIN_CACHE=m;_joinLoading=false;
+    const st=sLoad();let changed=false;
+    (st.users||[]).forEach(function(u){if(m[u.id]&&!u.joined){u.joined=m[u.id];changed=true;}});
+    if(changed)sSave();
+    return m;
+  }).catch(function(){_joinLoading=false;JOIN_CACHE={};return {};});
+}
+/* 从 TA 最近一次训练往前数连续天数（不是从今天算，别把别人没练的今天算断） */
+function userStreak(uid){
+  const rows=recsRows(uid).filter(function(r){return !!r.d;});
+  if(!rows.length)return 0;
+  const set={};rows.forEach(function(r){set[r.d]=1;});
+  const ds=Object.keys(set).sort();
+  let cur=ds[ds.length-1],n=0;
+  while(set[cur]){
+    n++;
+    const d=new Date(cur+"T00:00:00");d.setDate(d.getDate()-1);
+    cur=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  }
+  return n;
+}
+function userLatestWeight(uid){
+  const rows=recsRows(uid).filter(function(r){return r.w!=null&&r.w!==""&&!isNaN(Number(r.w));})
+    .sort(function(a,b){return b.d.localeCompare(a.d);});
+  return rows.length?Number(rows[0].w).toFixed(1):"—";
+}
+/* 用户主页「最新体重」数值后带 kg 单位；没数据时只显示 — */
+function userLatestWeightHTML(uid){
+  const w=userLatestWeight(uid);
+  return w==="—"?"—":w+'<small>kg</small>';
+}
+
 function renderUserProfile(){
   const box=document.getElementById("userHero");if(!box)return;
+  if(!JOIN_CACHE&&!_joinLoading){loadJoinTimes().then(function(){if(currentPageName()==="user")renderUserProfile();});}
   const uid=USER_UID,u=sUser(uid);
   const me=sMe();
   if(uid===(me&&me.id)){switchTab("profile");return;}
   const t=document.getElementById("userTitle");
   if(t)t.textContent=(u.name||"TA")+" 的主页";
   /* 头部卡 */
-  box.innerHTML='<div class="me-av">'+(u.emoji||"💪")+'</div>'+
+  const days=userWorkoutDays(uid);
+  box.innerHTML='<div class="me-av">'+sEsc(u.emoji||u.avatar||"💪")+'</div>'+
     '<div class="me-info"><div class="user-name">'+sEsc(u.name)+'</div>'+
-    '<div class="user-sub">已健身 <b style="color:var(--accent)">'+userWorkoutDays(uid)+'</b> 天</div></div>';
+    '<div class="user-sub">已健身 <b style="color:var(--accent)">'+days+'</b> 天</div></div>'+
+    '<div class="user-join">加入社区时间 <b>'+sEsc(userJoined(uid))+'</b></div>';
   const stats=document.getElementById("userStats");
   if(stats)stats.innerHTML=
-    '<div class="it"><div class="v">'+userWorkoutDays(uid)+'</div><div class="k">健身天数</div></div>';
+    '<div class="it"><div class="v">'+days+'</div><div class="k">健身天数</div></div>'+
+    '<div class="it"><div class="v">'+userStreak(uid)+'</div><div class="k">连续天数</div></div>'+
+    '<div class="it"><div class="v">'+userPostCount(uid)+'</div><div class="k">动态数量</div></div>'+
+    '<div class="it"><div class="v">'+userLatestWeightHTML(uid)+'</div><div class="k">最新体重</div></div>';
   const act=document.getElementById("userActions");
   if(act)act.innerHTML='';
   /* 两个视图都渲染，再按当前 tab 显示 */
@@ -2671,11 +2906,11 @@ function renderUserRecs(uid){
   const rs=document.getElementById("userRecSum");
   if(rs){
     const total=rows.reduce(function(a,r){return a+(Number(r.total)||0);},0);
-    rs.innerHTML=rows.length?'<span><b>'+rows.length+'</b> 天</span><span>累计 <b>'+total.toLocaleString()+'</b> 个</span><span>只有 TA 公开的部分</span>':'';
+    rs.innerHTML=rows.length?'<span><b>'+rows.length+'</b> 天</span><span>累计 <b>'+total.toLocaleString()+'</b> 个</span><span>来自云端公开记录</span>':'';
   }
   const rl=document.getElementById("userRecList");
   if(!rl)return;
-  if(!rows.length){rl.innerHTML='<div class="recs-empty">TA 还没有公开过训练内容</div>';return;}
+  if(!rows.length){rl.innerHTML='<div class="recs-empty">TA 还没有训练记录</div>';return;}
   let h="",month="";
   rows.forEach(function(r){
     const m=r.d.slice(0,7);
@@ -2730,7 +2965,6 @@ function parseRecPayload(x){
 }
 function pullUserRecords(uid){
   if(!CLOUD()||!uid)return Promise.resolve(false);
-  if(typeof window!=="undefined"&&window.__PREVIEW_FAKE_SYNC__)return Promise.resolve(false);
   if(_recsPulling[uid])return Promise.resolve(false);
   _recsPulling[uid]=true;
   return sbFetch("/rest/v1/records?select=d,payload,updated_at&uid=eq."+encodeURIComponent(uid)+"&limit=5000")
@@ -2786,11 +3020,11 @@ function renderRecordsPage(){
   const names={};rows.forEach(function(r){r.items.forEach(function(i){if(i.n)names[i.n]=1;});});
   let sum='<span><b>'+rows.length+'</b> 天</span><span>累计 <b>'+total.toLocaleString()+'</b> 个</span>';
   if(Object.keys(names).length)sum+='<span><b>'+Object.keys(names).length+'</b> 种动作</span>';
-  if(!isSelf)sum+='<span>只有 TA 公开的部分</span>';
+  if(!isSelf)sum+='<span>来自云端公开记录</span>';
   const sumEl=document.getElementById("recsSum");if(sumEl)sumEl.innerHTML=sum;
   const box=document.getElementById("recsList");if(!box)return;
   if(!rows.length){
-    box.innerHTML='<div class="recs-empty">'+(isSelf?"还没有记录，去「记录」页保存第一条吧":"TA 还没有公开过训练内容")+'</div>';
+    box.innerHTML='<div class="recs-empty">'+(isSelf?"还没有记录，去「记录」页保存第一条吧":"TA 还没有训练记录")+'</div>';
     return;
   }
   let h="",month="";
@@ -2947,7 +3181,7 @@ function openProfileEdit(){
     const me=sMe();
     if(me){
       if(NICKNAME===DEFAULT_NICKNAME&&me.name)NICKNAME=me.name;
-      if(me.emoji)AVATAR=me.emoji;
+      if(me.emoji&&AVATAR===DEFAULT_AVATAR)AVATAR=me.emoji;
       try{localStorage.setItem(NKEY,NICKNAME);localStorage.setItem(AKEY,AVATAR);}catch(e){}
     }
   }catch(e){}
@@ -3003,7 +3237,7 @@ function doProfileSave(nm,av){
   saveAll();closeProfileEdit();renderProfile();
   try{
     const me=sMe();
-    if(me){me.name=NICKNAME;me.avatar=AVATAR;sSave();
+    if(me){me.name=NICKNAME;me.emoji=AVATAR;me.avatar="";sSave();
       /* v1.11：改名要真的写进云端 profiles 行，否则换台设备登录还是旧名字 */
       if(typeof sbUpdateProfile==="function")sbUpdateProfile(me);
       if(typeof pushSettings==="function")pushSettings(false).catch(function(){});
@@ -4462,12 +4696,12 @@ function postCardHtml(p,me){
   /* v1.13：整张卡片可点，进动态详情页看图文、谁点赞、谁评论 */
   let h='<div class="fcard" onclick="openPostDetail(\''+p.id+'\')">'+
     '<div class="fhead"><div class="fav fav-click" onclick="event.stopPropagation();openUserProfile(\''+p.uid+'\')">'+sAv(u)+'</div>'+
-    '<div class="fmeta"><div class="fname fav-click" onclick="event.stopPropagation();openUserProfile(\''+p.uid+'\')">'+sEsc(u.name)+'</div><div class="ftime">'+sTime(p.ts)+'</div></div>'+
+    '<div class="fmeta"><span class="fname fav-click" onclick="event.stopPropagation();openUserProfile(\''+p.uid+'\')">'+sEsc(u.name)+'</span><div class="ftime">'+sTime(p.ts)+'</div></div>'+
     (mine?moreMenuHtml(p.id):'')+'</div>';
   if(p.text)h+='<div class="ftext">'+sEsc(p.text)+'</div>';
   if(p.workout&&p.workout.length)h+='<div class="workout-box">'+p.workout.map(function(x){
     return '<span>'+sEsc(x.n)+' <b>'+sEsc(x.v)+'</b> '+sEsc(x.u)+'</span>';}).join("")+
-    /* v1.12：训练成果旁边直接进记录页；别人的也能看（只看得到 TA 公开的部分） */
+    /* 训练成果旁边直接进记录页；训练记录对所有人公开，别人的也能看 */
     '<span class="wb-more" onclick="event.stopPropagation();openRecords(\''+p.uid+'\')">'+(mine?"看我的记录 ›":"看 TA 的记录 ›")+'</span></div>';
   /* v1.13：列表里不再展开评论、也不显示谁评论了 —— 想评论必须点进详情页 */
   const lk=postLiked(p.id),lc=likeCount(p.id),cc=commentCount(p.id);
@@ -4580,21 +4814,19 @@ function renderPostDetail(){
   /* 固定区：帖子正文 + 点赞 + 操作行 */
   let h='<div class="fcard" style="margin-top:14px;cursor:default;margin-bottom:0">'+
     '<div class="fhead"><div class="fav fav-click" onclick="openUserProfile(\''+p.uid+'\')">'+sAv(u)+'</div>'+
-    '<div class="fmeta"><div class="fname fav-click" onclick="openUserProfile(\''+p.uid+'\')">'+sEsc(u.name)+'</div><div class="ftime">'+sTime(p.ts)+'</div></div>'+
+    '<div class="fmeta"><span class="fname fav-click" onclick="openUserProfile(\''+p.uid+'\')">'+sEsc(u.name)+'</span><div class="ftime">'+sTime(p.ts)+'</div></div>'+
     '</div>';
   if(p.text)h+='<div class="ftext">'+sEsc(p.text)+'</div>';
   if(p.workout&&p.workout.length)h+='<div class="workout-box">'+p.workout.map(function(x){
     return '<span>'+sEsc(x.n)+' <b>'+sEsc(x.v)+'</b> '+sEsc(x.u)+'</span>';}).join("")+
     '<span class="wb-more" onclick="openRecords(\''+p.uid+'\')">'+(mine?"看我的记录 ›":"看 TA 的记录 ›")+'</span></div>';
-  h+='<div class="pd-like">'+
-    '<span class="lb">👍 '+likes.length+' 人点赞</span>';
+  h+='<div class="pd-like"><span class="lb">👍 '+likes.length+' 人点赞</span></div>';
   if(likes.length){
-    h+=likes.map(function(l){
+    h+='<div class="pd-like pd-like-who">'+likes.map(function(l){
       const lu=sUser(l.b);
       return '<span class="who fav-click" onclick="openUserProfile(\''+l.b+'\')"><span class="av">'+sEsc(lu.emoji||"💪")+'</span>'+sEsc(lu.name)+'</span>';
-    }).join("");
+    }).join("")+'</div>';
   }
-  h+='</div>';
   h+='<div class="pd-actbar">'+
     '<span class="pd-act-comment">💬 评论 '+cs.length+'</span>'+
     '<button class="pd-likebtn'+(lk?" on":"")+'" onclick="toggleLike(\''+p.id+'\')">'+
@@ -4602,14 +4834,18 @@ function renderPostDetail(){
     '</div></div>';
   head.innerHTML=h;
   /* 滚动区：评论列表 */
-  let ch='<div class="sec-title" style="margin-top:14px">评论 <span>共 '+cs.length+' 条</span></div>';
+  let ch='<section class="cmt-zone"><div class="cmt-zone-body">';
   ch+=cs.length?cs.map(function(c){
-    const cu=sUser(c.uid);
-    return '<div class="fcm"><div class="fcm-av fav-click" onclick="openUserProfile(\''+c.uid+'\')">'+sAv(cu)+'</div><div class="fcm-body">'+
-      '<div class="fcm-name"><span class="fav-click" onclick="openUserProfile(\''+c.uid+'\')">'+sEsc(cu.name)+'</span><span>'+sTime(c.ts)+'</span>'+
-      (me&&c.uid===me.id?'<span class="fcm-del" onclick="delComment(\''+c.id+'\',\''+p.id+'\')">删除</span>':'')+
-      '</div><div class="fcm-text">'+sEsc(c.text)+'</div></div></div>';
-  }).join(""):'<div class="pd-empty">还没有评论，来说一句</div>';
+    const cu=sUser(c.uid),own=me&&c.uid===me.id;
+    return '<article class="cmt-item">'+
+      '<div class="ci-av" onclick="openUserProfile(\''+c.uid+'\')">'+sAv(cu)+'</div>'+
+      '<div class="ci-main">'+
+        '<div class="ci-head"><span class="ci-name" onclick="openUserProfile(\''+c.uid+'\')">'+sEsc(cu.name)+'</span>'+
+          '<span class="ci-time">'+sTime(c.ts)+'</span>'+
+          (own?'<span class="ci-del" onclick="delComment(\''+c.id+'\',\''+p.id+'\')">删除</span>':'')+
+        '</div><div class="ci-text">'+sEsc(c.text)+'</div></div></article>';
+  }).join(""):'<div class="cmt-empty">还没有评论，来说一句吧</div>';
+  ch+='</div></section>';
   cmt.innerHTML=ch;
   renderPdBar(p,me);
 }
@@ -5054,7 +5290,9 @@ function socialOnEnter(name){
     if(name==="post"&&PD_ID)renderPostDetail();
     if(name==="user"&&USER_UID)renderUserProfile();
     if(name==="profile"||name==="settings"){renderProfile();refreshSocialCounts();}
-    if(name==="data")setDataView(dataView);
+    if(name==="friends")renderFriends();
+    if(name==="data")renderStats();
+    if(name==="history")renderHistory();
     if(name==="feed"||name==="myposts")netProbe();   /* 进社区页顺手探一次（30 秒内不重复探） */
   }catch(e){}
 }
