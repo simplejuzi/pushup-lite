@@ -1,12 +1,11 @@
 {
-  "version": "1.29",
-  "tag": "v1.29",
-  "apk": "PUSHUP-v1.29.apk",
-  "apkUrl": "https://github.com/simplejuzi/PUSHUP/releases/download/v1.29/PUSHUP-v1.29.apk",
+  "version": "1.30",
+  "tag": "v1.30",
+  "apk": "PUSHUP-v1.30.apk",
+  "apkUrl": "https://github.com/simplejuzi/PUSHUP/releases/download/v1.30/PUSHUP-v1.30.apk",
   "changelog": [
-    "从完整版升级为 Lite 界面：保留记录 / 数据 / 动态 / 我的四个页面",
-    "原有账号、登录状态和云端数据全部保留，无需重新注册",
-    "去掉聊天、好友、通知和图片上传，头像改为 emoji",
-    "动态页保持每 8 秒 1 次同步，切后台完全停止"
+    "取消每 8 秒自动拉取，改为点底栏「动态」或下拉刷新时才同步",
+    "停在动态页不再产生后台请求，反代消耗大幅下降",
+    "登录、训练记录同步等一次性请求保持不变"
   ]
 }
