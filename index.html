@@ -972,6 +972,19 @@ body.dark .back-btn{box-shadow:none}
 .user-join b{color:var(--ink);font-weight:700;margin-left:3px}
 
 </style>
+<style id="v133-toast-fix">
+/* v1.33：主样式表里有一段 5 tab 改造时留下的残缺 CSS（无选择器属性块），
+   会吞掉后面的 .toast 规则，导致发布/评论结果提示看不见。
+   这里用 ID 选择器独立定义，保证成功 / 失败 / 离线 / 超时提示一定可见。 */
+#toast{position:absolute;left:50%;bottom:104px;transform:translate(-50%,12px);
+  background:var(--ink);color:var(--surface);font-size:12.5px;font-weight:600;
+  padding:11px 18px;border-radius:14px;opacity:0;pointer-events:none;transition:.25s;
+  z-index:999;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,.18);
+  max-width:88%;text-align:center;display:block}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+#toast.mid{bottom:auto;top:36%;transform:translate(-50%,10px)}
+#toast.mid.show{transform:translate(-50%,0)}
+</style>
 </head>
 <body>
 <div class="stage">
@@ -1663,13 +1676,13 @@ const lvCls={"入门":"b","进阶":"i","高阶":"a"};
 const isTime=u=>u==="秒";
 
 /* ============ v1.1：版本、主题、更新 ============ */
-const APP_VERSION="v1.32";
+const APP_VERSION="v1.33";
 /* 应用内更新日志：与 version.json 的 changelog 完全一致 */
 const APP_CHANGELOG=[
-  "找朋友列表以云端为准，清掉本机历史注册残留的假账号",
-  "训练天数不再拿本机缓存冒充云端数据，云端没记录就显示 0",
-  "首次进入好友页会按需校准一次用户列表，之后不额外请求",
-  "其余与 v1.31 相同：5 tab / 找朋友 / 个人主页四项 / 记录备注"
+  "发布动态、评论真正检测服务器结果：成功 / 失败都有提示",
+  "失败不写入本机、不清空输入、弹窗保留，可直接重试",
+  "离线立即提醒，8 秒无响应按超时提醒",
+  "发布期间按钮禁用防重复提交；修复结果提示条不显示的问题"
 ];
 /* 过渡版 v1.29：这个包覆盖安装在原 PUSHUP App 上，包名是 com.simplejuzi.pushup。
    更新检查必须继续指向原仓库 simplejuzi/PUSHUP，否则收不到后续版本。
@@ -1864,7 +1877,7 @@ function saveAll(){
     localStorage.setItem(AKEY,AVATAR);localStorage.setItem(NKEY,NICKNAME);}catch(e){}
   try{scheduleSettingsSync();}catch(e){}
 }
-function toast(msg){
+function toast(msg,ms){
   const el=document.getElementById("toast");
   if(!el)return;
   el.textContent=msg;
@@ -1873,7 +1886,7 @@ function toast(msg){
   try{open=!!document.querySelector(".modal.on");}catch(e){}
   el.classList.toggle("mid",open);
   el.classList.add("show");
-  clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove("show"),2000);
+  clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove("show"),ms||2000);
 }
 /* v1.7：点弹窗外的空白处关闭（只处理遮罩本身，点面板内部不受影响） */
 function modalBackdropClose(e,id){
@@ -4211,15 +4224,15 @@ function netProbe(force){
     if(timer)clearTimeout(timer);noteNet(false);return false;
   });
 }
-function sbPush(t,row){if(!CLOUD())return Promise.resolve(null);
-  return sbPushRaw(t,row,true);}
-function sbPushRaw(t,row,canRefresh){
-  return fetch(SB_URL+"/rest/v1/"+t,{method:"POST",headers:sbH(),body:JSON.stringify(row)})
+function sbPush(t,row,signal){if(!CLOUD())return Promise.resolve(false);
+  return sbPushRaw(t,row,true,signal);}
+function sbPushRaw(t,row,canRefresh,signal){
+  return fetch(SB_URL+"/rest/v1/"+t,{method:"POST",headers:sbH(),body:JSON.stringify(row),signal:signal||undefined})
     .then(function(r){
       noteNet(true);
       if(r.status===401&&SB_TOKEN&&SB_RTOKEN&&canRefresh){
         return sbTryRefresh().then(function(ok){
-          if(ok)return sbPushRaw(t,row,false);
+          if(ok)return sbPushRaw(t,row,false,signal);
           AUTH_EXPIRED=true;markAuthExpired();return false;});
       }
       if(r.status===401){AUTH_EXPIRED=true;markAuthExpired();return false;}
@@ -4227,6 +4240,32 @@ function sbPushRaw(t,row,canRefresh){
     })
     .catch(function(){noteNet(false);return false;});}
 function sbDel(t,q){if(!CLOUD())return;sbFetch("/rest/v1/"+t+"?"+q,{method:"DELETE"});}
+/* ===== v1.33：发布 / 评论写操作守卫（真检测） =====
+   只有服务器明确返回成功才算成功；null / false / HTTP 错误 / 异常一律算失败。
+   离线立即提醒，8 秒无响应按超时提醒并中断请求（AbortController）。 */
+const WRITE_GUARD_MS=8000;
+function netGuard(label,okText,writeFn){
+  if(typeof navigator!=="undefined"&&navigator.onLine===false){
+    toast("当前离线，"+label+"未成功，联网后再试",3600);return Promise.resolve(false);
+  }
+  const ctl=(typeof AbortController!=="undefined")?new AbortController():null;
+  let timer=null;
+  const timeout=new Promise(function(res){
+    timer=setTimeout(function(){
+      try{if(ctl)ctl.abort();}catch(e){}
+      res("__TIMEOUT__");
+    },WRITE_GUARD_MS);
+  });
+  let task;
+  try{task=Promise.resolve(writeFn(ctl?ctl.signal:undefined));}
+  catch(e){task=Promise.resolve(false);}
+  return Promise.race([task,timeout]).then(function(v){
+    clearTimeout(timer);
+    if(v==="__TIMEOUT__"){toast("网络超时，"+label+"可能没发出去，请稍后重试",3600);return false;}
+    if(v===true){toast(okText,2200);return true;}
+    toast(label+"失败，请检查网络后重试",3600);return false;
+  });
+}
 /* v1.9：把 HTTP 状态也带回来，才能分清「网络没通」和「服务器说不对」 */
 function sbAuth(p,b){
   return fetch(SB_URL+"/auth/v1/"+p,{method:"POST",
@@ -4683,11 +4722,19 @@ function sendComment(id){
   const text=String((el&&el.value)||"").trim().slice(0,200);
   if(!text){toast("说点什么吧");return;}
   const c={id:sUid(),p:id,uid:me.id,text:text,ts:Date.now()};
-  const s=sLoad();s.comments.push(c);sSave();
-  sbPush("post_comments",{id:c.id,post_id:id,uid:me.id,text:text,ts:c.ts});
-  if(el)el.value="";
-  const pn=document.getElementById("emojiPanel");if(pn)pn.classList.remove("on");
-  openCm[id]=true;refreshPostViews();
+  const btn=document.querySelector("#pdBar .cm-send");
+  if(btn&&btn.dataset.busy)return;
+  if(btn){btn.dataset.busy="1";btn.disabled=true;btn.textContent="发送中…";}
+  netGuard("评论发送","评论已发送",function(signal){
+    return sbPush("post_comments",{id:c.id,post_id:id,uid:me.id,text:text,ts:c.ts},signal);
+  }).then(function(ok){
+    if(btn){delete btn.dataset.busy;btn.disabled=false;btn.textContent="发送";}
+    if(!ok)return;                     /* 失败 / 离线 / 超时：输入内容保留，可直接重试 */
+    const s=sLoad();s.comments.push(c);sSave();
+    if(el)el.value="";
+    const pn=document.getElementById("emojiPanel");if(pn)pn.classList.remove("on");
+    openCm[id]=true;refreshPostViews();
+  });
 }
 function delComment(cid,pid){
   const me=sMe();if(!me)return;
@@ -5001,16 +5048,21 @@ function closePost(){document.getElementById("postModal").classList.remove("on")
   document.getElementById("emojiPanel").classList.remove("on");}
 function submitPost(){
   const me=sMe();if(!me){openAuth();return;}
-  const text=((document.getElementById("postText")||{}).value||"").trim();
+  const ta=document.getElementById("postText");
+  const text=((ta&&ta.value)||"").trim();
   const w=postAttach?todayWorkout():null;
   if(!text&&!w){toast("写点什么，或者带上今日成果");return;}
   const p={id:sUid(),uid:me.id,text:text,workout:w,ts:Date.now()};
-  sLoad().posts.push(p);sSave();
-  const up=sbPush("posts",{id:p.id,uid:p.uid,text:p.text,workout:p.workout,ts:p.ts});
-  closePost();renderFeed();renderMyPosts();
-  Promise.resolve(up).then(function(ok){
-    if(ok===false)toast("已存在本机 · 但没发到云端，别人看不到");
-    else toast("已发布");
+  const btn=document.querySelector("#postModal .btn-primary.wide");
+  if(btn&&btn.dataset.busy)return;
+  if(btn){btn.dataset.busy="1";btn.disabled=true;btn.textContent="发布中…";}
+  netGuard("动态发布","发布成功",function(signal){
+    return sbPush("posts",{id:p.id,uid:p.uid,text:p.text,workout:p.workout,ts:p.ts},signal);
+  }).then(function(ok){
+    if(btn){delete btn.dataset.busy;btn.disabled=false;btn.textContent="发布";}
+    if(!ok)return;                     /* 失败 / 离线 / 超时：不写本机，弹窗和文字都留着 */
+    sLoad().posts.push(p);sSave();
+    closePost();renderFeed();renderMyPosts();
   });
 }
 

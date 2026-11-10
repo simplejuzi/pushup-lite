@@ -1,12 +1,12 @@
 {
-  "version": "1.32",
-  "tag": "v1.32",
-  "apk": "PUSHUP-v1.32.apk",
-  "apkUrl": "https://github.com/simplejuzi/PUSHUP/releases/download/v1.32/PUSHUP-v1.32.apk",
+  "version": "1.33",
+  "tag": "v1.33",
+  "apk": "PUSHUP-v1.33.apk",
+  "apkUrl": "https://github.com/simplejuzi/PUSHUP/releases/download/v1.33/PUSHUP-v1.33.apk",
   "changelog": [
-    "找朋友列表以云端为准，清掉本机历史注册残留的假账号",
-    "训练天数不再拿本机缓存冒充云端数据，云端没记录就显示 0",
-    "首次进入好友页会按需校准一次用户列表，之后不额外请求",
-    "其余与 v1.31 相同：5 tab / 找朋友 / 个人主页四项 / 记录备注"
+    "发布动态、评论真正检测服务器结果：成功 / 失败都有提示",
+    "失败不写入本机、不清空输入、弹窗保留，可直接重试",
+    "离线立即提醒，8 秒无响应按超时提醒",
+    "发布期间按钮禁用防重复提交；修复结果提示条不显示的问题"
   ]
 }
