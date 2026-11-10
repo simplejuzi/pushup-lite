@@ -1206,10 +1206,10 @@ body.dark .lc-tip span{color:#5C6068;opacity:1}
     </div>
 
     <div class="tabbar" id="tabbar">
-      <button class="tab on" id="tab-record" onclick="switchTab('record')"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>记录</button>
-      <button class="tab" id="tab-data" onclick="switchTab('data')"><svg viewBox="0 0 24 24"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>数据</button>
-      <button class="tab" id="tab-feed" onclick="switchTab('feed')"><svg viewBox="0 0 24 24"><path d="M4 5h16v12H8l-4 3V5z"/><path d="M8 9h8M8 13h5"/></svg>动态</button>
-      <button class="tab" id="tab-profile" onclick="switchTab('profile')"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6"/></svg>我的</button>
+      <button class="tab on" id="tab-record" onclick="switchTab('record',true)"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>记录</button>
+      <button class="tab" id="tab-data" onclick="switchTab('data',true)"><svg viewBox="0 0 24 24"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>数据</button>
+      <button class="tab" id="tab-feed" onclick="switchTab('feed',true)"><svg viewBox="0 0 24 24"><path d="M4 5h16v12H8l-4 3V5z"/><path d="M8 9h8M8 13h5"/></svg>动态</button>
+      <button class="tab" id="tab-profile" onclick="switchTab('profile',true)"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6"/></svg>我的</button>
     </div>
 
     <!-- v1.7：悬浮保存球（拖动后自动吸附左右侧边，位置记住） -->
@@ -1763,7 +1763,7 @@ function modalBackdropClose(e,id){
   else if(id==="logoutModal")closeLogout();
   else m.classList.remove("on");
 }
-function switchTab(name){
+function switchTab(name,fromTabBar){
   CUR_TAB=name;
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("on"));
   document.querySelectorAll(".tab").forEach(t=>t.classList.remove("on"));
@@ -1796,6 +1796,9 @@ function switchTab(name){
   if(name==="profile"||name==="settings")renderProfile();
   if(name==="feed")setFeedFilter("all");   /* 每次进动态页都默认显示「全部」 */
   socialOnEnter(name);
+  /* 点底栏「动态」才拉一次社区数据；详情 / 我的动态 / 他人主页等内部跳转不拉。
+     动态页下拉刷新 refreshFeedNow() 也保留为手动入口。 */
+  if(fromTabBar&&name==="feed")pollSocial();
 }
 /* v1.2：动态取当天，避免 App 跨天挂后台时「回今天」回到昨天 */
 function todayStr(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
@@ -4183,24 +4186,21 @@ function syncCloud(){
     sSave();refreshSocialUI();
   }).catch(function(){});
 }
+/* 取消周期轮询：反代调用次数是这个项目唯一的成本命门。
+   原来停在动态页 10 分钟约 90 次请求，现在改成纯手动触发：
+     ① 点底栏「动态」tab → switchTab 的 fromTabBar 分支 → pollSocial() 一次
+     ② 动态页下拉刷新 → refreshFeedNow() → syncCloud() 一次
+   停在动态页不动 = 0 次。冷启动 / 登录成功 / 训练记录节流拉取仍保留，
+   它们是一次性或用户手势触发，不是定时器。
+   本函数只清理旧版本遗留的定时器，不再创建新的。 */
 function startPolling(){
-  if(chatTimer)clearInterval(chatTimer);
-  /* Lite 反代优化（最关键的一条）：
-     老版本每 1 秒拉一次 6 张表（含 base64 图片），一天几十万次请求。
-     现在：① 间隔 8 秒；② App 切到后台就完全停；③ 只有停在动态相关页面才拉，
-     记录 / 数据 / 我的 这些页面根本不需要社区数据，一个请求都不发；
-     ④ 4 张表合并成 1 次 RPC，一次轮询只花 1 个反代调用。 */
-  chatTimer=setInterval(function(){
-    try{if(document.hidden)return;}catch(e){}
-    if(!syncEnabled())return;
-    if(!(CUR_TAB==="feed"||CUR_TAB==="post"||CUR_TAB==="myposts"||CUR_TAB==="user"))return;
-    pollSocial();
-  },8000);
+  if(chatTimer){clearInterval(chatTimer);chatTimer=null;}
 }
-/* v1.19：社区数据实时刷新 —— 周期性全量拉取并去重合并（syncCloud 幂等）。 */
+/* 手动触发一次社区同步（幂等、带重入锁；未登录时零请求）。 */
 let _polling=false;
 function pollSocial(){
   if(_polling)return;
+  if(!syncEnabled())return;   /* 未登录 / 无云端配置：点击也不发请求 */
   _polling=true;
   /* v1.28：每次轮询同步前先确认账号还在，被删就踢出，避免「显示已同步但账号已没了」 */
   if(CLOUD()&&SB_TOKEN&&sMe()){
@@ -5082,7 +5082,7 @@ function initSocial(){
       s.session="me_preview";sSave();
     }
     refreshSocialUI();
-    startPolling();
+    startPolling();   /* 只清理定时器：不再周期拉取 */
     /* v1.28：进页面先验证账号是否还存在，不存在就直接踢出，绝不当作新账号复活 */
     if(CLOUD()&&SB_TOKEN&&sMe()){
       verifyAccount().then(function(ok){
