@@ -1,7 +1,36 @@
 # PUSHUP Lite · 交接文档
 
 > 面向接手的 AI / 开发者。读完这份再动手，可以省掉至少两天踩坑时间。
-> 最后更新：2026-11-10，对应版本 **v1.1**
+> 最后更新：2026-11-10 晚，对应版本 **PUSHUP v1.30**（Lite 主线 v1.2 已冻结）
+
+## ⚠️ 状态更新（2026-11-10 晚）· 先看这一段
+
+**正文是 v1.1 时代的历史记录。下面每一条都优先于正文里任何一句过时描述。**
+
+1. **只维护 PUSHUP 版**：Lite 功能已与主线一致，Lite 停止更新。唯一主线是
+   `pushup-lite` 仓库的 **`transition/legacy-upgrade`** 分支 → 打包成 `com.simplejuzi.pushup` →
+   发布到 **`simplejuzi/PUSHUP`** 的 Release（当前 v1.30，versionCode 10001）。
+   `main` 分支（Lite v1.2）已冻结，其 workflow 已禁止构建/发布；
+   **仓库本身不能归档**——主线代码就在这个仓库里。
+2. **云端走旧库 + 根路径反代**：`zqrlolyntlcewrwfhumd` + `.../rest/v1/...`（不带 `/lite`），
+   老账号、登录态、云端数据全部保留。新库 `ctcqmj…` 与 `/lite` 路由弃用
+   （`/lite` 至今 403，部署的仍是旧版反代代码）。
+3. **8 秒轮询已彻底删除**（v1.2 / v1.30）：`startPolling()` 只清理旧定时器；
+   只有**点底栏「动态」tab**、**动态页下拉刷新**、冷启动、登录、记录写入等用户动作才发请求。
+   停在动态页不动 = **0 次**；切后台 = 0 次；检查更新走 GitHub，不消耗反代额度。
+4. **消耗基准已重写**：中度用户约 56 次/天 ≈ 1,680 次/月；100 个这样的用户约 16.8 万次/月。
+   详见工作区 `PUSHUP-项目汇报-反代消耗.md`。旧的「~90 次/10 分钟」与「100 万次永久免费」都已作废。
+5. **计费规则已变**（腾讯云官方 583/12282、583/12281）：开通前 3 个月每月
+   100 万次 + 100 万 GB-s + 2 GB 流量，0 元；满 3 个月后为基础套餐
+   50 万次 + 10 万 GB-s + 2 GB，**固定约 12.8 元/月**（每日 0.41 元）；
+   超出按量 0.0133 元/万次、0.00011108 元/GB-s、0.8 元/GB。
+   真正先触顶的是 **2 GB 流量**（约 156 个中度用户），不是调用次数 → 响应体积比请求数更值钱。
+6. **P0 待办**：旧 Supabase 项目跑一次 `transition-legacy-patch.sql`。
+   实测 `lite_bundle()` 仍 404、`profiles.emoji` 仍 400，导致每次社区同步退化成 4 表并行（4~5 倍请求）。
+7. 其余历史章节（数据库、本地存储键、踩过的坑、验证方法）依然有效；但涉及
+   「Lite 用新库 / 尚未构建 APK / 8 秒轮询 / 90 次/10 分钟 / 100 万次免费」的句子，一律以本块为准。
+
+---
 
 ---
 
@@ -10,13 +39,13 @@
 | 项 | 内容 |
 |---|---|
 | 是什么 | 极简俯卧撑训练记录 Android App，单页 Web（`index.html`）+ Capacitor 壳 |
-| 仓库 | `simplejuzi/pushup-lite`（GitHub） |
-| 包名 | `com.pushup.lite`（可与完整版 `com.simplejuzi.pushup` 同机共存） |
-| 云端 | Supabase 项目 `ctcqmjssqineuubadqty` |
+| 仓库 | `simplejuzi/pushup-lite`（代码）/ `simplejuzi/PUSHUP`（发布 Release） |
+| 包名 | 主线 `com.simplejuzi.pushup`（过渡版）；`com.pushup.lite` 已冻结 |
+| 云端 | 主线用**旧库** `zqrlolyntlcewrwfhumd` + 反代**根路径** |
 | 网络方案 | **必须经自建腾讯云 SCF 反代**，直连 supabase.co 在国内被 TLS 阻断 |
 | 页面 | 记录 · 数据 · 动态 · 我的（4 个 tab） |
-| 当前状态 | 代码 v1.1 完成，**尚未构建过 APK**（自动构建已按要求关闭） |
-| 最大风险点 | 反代调用次数 = 腾讯云免费额度，是这个项目唯一的成本命门 |
+| 当前状态 | **PUSHUP v1.30 已发布**（手动触发构建）；`on.push` 仍注释 |
+| 最大风险点 | 反代响应体积（2 GB 流量额度先触顶）+ 旧库补丁未跑导致的 4 倍请求 |
 
 ---
 
@@ -66,9 +95,11 @@
 
 ### 明确没做的
 
-- **没有构建过 APK**。`build-apk.yml` 现在只剩手动触发（`workflow_dispatch`）
-- 没有在真机上跑过 v1.1（v1.0 的页面交互已用无头浏览器验证过）
-- 没有做 Supabase 新库的实测（需要用户先跑 `supabase.sql`）
+- ~~没有构建过 APK~~ → **已过时**：v1.1 / v1.2 / v1.29 / v1.30 均已构建发布。
+  `on.push` 仍保持注释，构建只能手动 `workflow_dispatch`。
+- 真机验证仍未做（页面交互用无头浏览器验证过）。
+- 新 Supabase 项目 `ctcqmj…` 未初始化，且**已决定弃用**（主线连旧库）。
+- **旧库兼容补丁 `transition-legacy-patch.sql` 仍未执行**（P0）。
 
 ---
 
@@ -130,7 +161,7 @@ Supabase（Auth 发 token + PostgREST 读写 public.*）
 | `renderPostDetail()` | 动态详情页 + 评论区自适应布局 |
 | `renderMyPosts()` / `renderUserProfile()` | 我的动态 / 他人主页 |
 | `postCardHtml(p, me)` | 单条动态卡片 HTML |
-| `switchTab(name)` | 切页面，同时写 `CUR_TAB`（轮询靠它判断要不要同步） |
+| `switchTab(name, fromTabBar)` | 切页面；只有 `fromTabBar && name==="feed"` 才 `pollSocial()` 拉一次社区数据 |
 | `socialOnEnter(name)` / `refreshSocialUI()` | 进页面时的刷新钩子；后者会刷新「当前 on 的那个页」 |
 | `applyTheme()` / `applyPalette()` | 主题与配色 |
 
@@ -144,7 +175,7 @@ Supabase（Auth 发 token + PostgREST 读写 public.*）
 | `sbAuth(p, b)` | 调 `/auth/v1/*`（登录、注册、刷新） |
 | `syncCloud()` | **核心同步**：见第 7 节，1 次 RPC 或降级 4 表，然后合并进 `sLoad()` |
 | `pullFour()` | 老的 4 表并行拉取（降级路径 + RPC 未部署时用） |
-| `startPolling()` / `pollSocial()` | 轮询（8 秒，`_polling` 锁防重入） |
+| `startPolling()` / `pollSocial()` | 前者只清理旧定时器（不再创建 `setInterval`）；后者是手动同步入口，带 `_polling` 重入锁与登录判断 |
 | `syncEnabled()` | 是否该同步：有登录 + 有 token + 有云端配置 |
 | `verifyAccount()` | 校验账号是否还存在（60 秒缓存，冷启动必验） |
 | `kickAccount(reason)` | 账号没了 → 清登录态、回默认昵称头像、关弹窗、toast |
@@ -237,13 +268,13 @@ const UPSTREAM_MAP = {
 
 ### 消耗账：优化前后
 
-| 场景 | v1.0 | v1.1 |
-|---|---|---|
-| 停在**动态页** 10 分钟 | ~630 次 | **~90 次** |
-| 停在**记录/数据/我的**页 10 分钟 | 2~3 次 | 2~3 次 |
-| 切后台 / 锁屏 | 0 | 0 |
-| 单次响应体积（空库） | ~1 KB | ~1 KB |
-| 单次响应体积（30 人 300 条动态） | 15~25 KB | 15~25 KB |
+| 场景 | v1.0（历史） | v1.1（历史） | **v1.30（当前）** |
+|---|---|---|---|
+| 停在**动态页** 10 分钟 | ~630 次 | ~90 次 | **0 次**（定时器已删） |
+| 点一次底栏「动态」 | — | — | 1~2 次（补丁已跑）/ 5~6 次（补丁未跑） |
+| 停在**记录/数据/我的**页 10 分钟 | 2~3 次 | 2~3 次 | 0 次（点 tab 才触发节流拉取） |
+| 切后台 / 锁屏 | 0 | 0 | 0 |
+| 单次响应体积（30 人 300 条动态） | ~29 MB | 15~25 KB | 15~25 KB |
 
 v1.0 那 630 次的构成：首屏 ~11 次 + 每 4 秒 4 个请求 × 150 轮 = 600 + 账号校验 ~20。
 
@@ -254,16 +285,37 @@ v1.0 那 630 次的构成：首屏 ~11 次 + 每 4 秒 4 个请求 × 150 轮 = 
    数据库侧是一个 `security definer` 的 SQL 函数，绕过 RLS 一次聚合，比四次请求更省。
    前端有**自动降级**：函数不存在（404）或返回结构不对 → `_rpcOff=true` → 之后都走 `pullFour()` 四表并行，**不会崩，只是没那么省**。降级只判断一次，不会每轮多打一个空请求。
 
-2. **轮询 4 秒 → 8 秒**（省 50%）
+2. **轮询 4 秒 → 8 秒**（省 50%）—— **已在 v1.2 / v1.30 彻底取消轮询**，见上方当前列
 
 3. **账号校验缓存 30 秒 → 60 秒**；冷启动仍然强制验一次，所以「被删账号秒退」的体验不变
 
-### 换算成额度
+### 换算成额度（2026-11-10 重算，旧结论已作废）
 
-~90 次/10 分钟 ≈ 540 次/小时。每天用 1 小时 ≈ 1.6 万次/月，10 个日活 = 16 万次/月。
-腾讯云 SCF 免费额度 100 万次/月 + 40 万 GBs/月 → **几十个日活以内完全安全**。
+手动同步后，一个「中度用户」约 56 次/天 ≈ **1,680 次/月**；100 个这样的用户 ≈ 16.8 万次/月、
+1.05 万 GB-s、约 1.28 GB 流量（假设 128 MB / 0.5 s 每次、平均响应 8 KB）。
 
-⚠️ **如果以后要加回「实时感」**，不要降间隔，先考虑：长连接（Supabase Realtime）、或者只在「有变化时」才拉（`?ts=gt.<last>` 增量查询）。直接改回 4 秒会重新踩回额度问题。
+腾讯云 SCF **现行**计费（官方 583/12282、583/12281；旧文档「100 万次永久免费」已作废）：
+- 开通前 3 个月：100 万次 + 100 万 GB-s + 2 GB 流量/月，**0 元**
+- 满 3 个月后：基础套餐 50 万次 + 10 万 GB-s + 2 GB/月，**固定约 12.8 元/月**（每日 0.41 元）；
+  上月三项用量全为 0 时才不扣。超出按 0.0133 元/万次、0.00011108 元/GB-s、0.8 元/GB
+
+| 用户数（中度） | 月请求 | 月流量 | 月账单 |
+|---:|---:|---:|---:|
+| 100 | 16.8 万次 | 1.28 GB | ¥12.80 |
+| 500 | 84 万次 | 6.41 GB | ¥16.78 |
+| 1,000 | 168 万次 | 12.82 GB | ¥23.58 |
+
+**先触顶的是 2 GB 流量（约 156 人），不是调用次数（约 298 人）** →
+显式列字段、不 `select=*`、不拉 base64，比省一次点击更重要。
+
+⚠️ 两个会让用量翻倍的坑：
+1. 旧库没跑 `transition-legacy-patch.sql` → `lite_bundle()` 404 → 每次社区同步退化成 4 表并行
+   （整体约 2 倍、社区同步 4~5 倍）。
+2. `initSocial()` 的 `syncCloud()` 只判断 `CLOUD()`，未登录也会拉；而补丁函数只授权
+   `authenticated`，未登录调用被拒后会把 `_rpcOff` 置 true，导致**本次会话后续同步都走四表**。
+   下一版应给 `syncCloud()` 加 `syncEnabled()` 判断。
+
+如果以后要加回「实时感」，不要降轮询间隔：优先增量查询（`?ts=gt.<last>` / `updated_at`）或 Supabase Realtime。
 
 ---
 
@@ -294,17 +346,17 @@ v1.0 那 630 次的构成：首屏 ~11 次 + 每 4 秒 4 个请求 × 150 轮 = 
 python tools/poll-bench.py 40      # 跑 40 秒，打印每个接口被调用几次
 ```
 
-输出示例（v1.1 实测）：
+输出示例（v1.30 假服务器实测，40 秒；脚本会在 12.4s / 26.4s 模拟两次点击）：
 
 ```
-=== 实测 40 秒 ===
-  POST /rest/v1/rpc/lite_bundle    4
-  GET /rest/v1/                    1
-  GET /auth/v1/user                1
-  合计 6 次 → 每分钟 9.0 次
-  外推 10 分钟 ≈ 90 次
-  轮询间隔实测: [8.0, 8.0, 8.0]
+0.5s  GET /rest/v1/          连通性探测（冷启动）
+0.5s  GET /auth/v1/user      账号校验（冷启动）
+12.4s POST lite_bundle       模拟点底栏「动态」
+26.4s POST lite_bundle       再点一次
 ```
+8/16/24/32/40 秒**全部无请求**，即停在动态页不动 = 0 次。
+⚠️ 脚本打印的「外推 10 分钟 ≈ N 次」是按这段含人为点击的样本线性算的，
+   手动同步模式下**不具备静置意义**，别拿它当消耗基准。
 
 它的原理，值得记住：
 1. 起一个 Python `http.server` 假后台，按路径返回假数据（含 `lite_bundle` 的四键结构）
@@ -313,10 +365,10 @@ python tools/poll-bench.py 40      # 跑 40 秒，打印每个接口被调用几
 
 ### 几个 headless 的坑（踩过）
 
-- **不要加 `--virtual-time-budget=0`**：虚拟时间会让 `setInterval` 疯狂推进，8 秒的轮询被压缩成 0.0 秒，测出来的数字全错。要测真实间隔就别传这个参数。
+- **不要加 `--virtual-time-budget=0`**：虚拟时间会让定时器疯狂推进，模拟点击的时刻被压缩成 0.0 秒，测出来的数字全错。
 - 要抓中间状态，就在种子脚本里 `setTimeout(..., N)` 里写 `document.title = ...`，然后 `--dump-dom | grep title`。
 - **窗口宽度用 500**：`.phone` 在桌面模式固定 500px，用 390 会截掉右侧。
-- `headless` 下 `document.hidden` 可能是 true，会让轮询直接 return，测不到请求。
+- `headless` 下 `document.hidden` 可能是 true，会让同步直接 return，测不到请求。
 
 ---
 
@@ -331,7 +383,10 @@ cd android && ./gradlew assembleDebug
 Actions 上：`build-apk.yml` **只能手动触发**（Actions → 选工作流 → Run workflow）。
 想恢复 push 自动构建，把文件里 `#  push:` 那一整段注释取消即可。
 
-`version.json` 是版本唯一来源，脚本会校验 `index.html` 里的 `const APP_VERSION="v1.1";` 是否与它一致，不一致直接失败。**发版时两个地方都要改，还要改 `sw.js` 的缓存名**（`pushup-lite-v2` → `v3`），否则老用户装完还是旧缓存。
+`version.json` 是版本唯一来源，脚本会校验 `index.html` 里的 `APP_VERSION` 是否与它一致，不一致直接失败。
+**主线现在是 v1.30（发布到 `simplejuzi/PUSHUP`）**，发版时必改 5 处：
+`version.json`、`APP_VERSION`、`APP_CHANGELOG`、`sw.js` 缓存名、workflow 的 `versionCode`（每次 +1，当前 10001）。
+版本号必须 > v1.30，原 App 才会判定有更新。详见 `PUSHUP-项目汇报-反代消耗.md` §4。
 
 `signing/debug.keystore` 是**故意入库**的固定 debug 签名，为了让每次云端构建签名一致、可直接覆盖升级。私钥是公开的，**绝不能用于上架**。
 
@@ -366,28 +421,24 @@ Actions 上：`build-apk.yml` **只能手动触发**（Actions → 选工作流 
 
 ## 12. 接下来该干什么（按优先级）
 
-### 必须先做（否则 App 连不上）
+### P0 必须先做（否则用量是 4 倍、动态页资料异常）
 
-1. **新 Supabase 项目跑 `supabase.sql`**
-   SQL Editor → 整段粘贴 → Run。幂等，可重复跑。
-   跑完验证：`select public.lite_bundle();` 应返回含四个键的 JSON（空库时都是 `[]`）。
-2. **重新部署 SCF 反代**
-   腾讯云控制台 → 函数代码 → 粘贴新的 `supabase-proxy/scf/index.js` → 部署。
-   不部署的话 `/lite` 会 403，App 完全连不上。**完整版不受影响**（根路径行为没变）。
-3. 验证反代：浏览器直接开
-   `https://1301392226-ickz22vd03.ap-guangzhou.tencentscf.com/lite/rest/v1/profiles?select=id&limit=1`
-   带 `apikey` 头应返回 `[]` 而不是 403 / 502。
+1. **旧 Supabase 项目 `zqrlol…` 跑一次 `transition-legacy-patch.sql`**（非破坏性、幂等）。
+   实测 `lite_bundle()` 仍 404、`profiles.emoji` 仍 400。
+   验证：`select public.lite_bundle();` 返回含 profiles/posts/likes/comments 四键的 JSON。
+2. 用登录用户实测一次「点底栏动态」：应只有 1 次 `lite_bundle`，不应出现四表并行。
 
 ### 然后
 
-4. 真机跑一遍：注册 → 发动态 → 点赞 → 评论 → 删动态 → 编辑资料换 emoji → 记录页打卡 → 换设备登录看同步
-5. 构建 APK（手动触发 Actions）
-6. 确认 `keep-alive.yml` 已指向新项目（v1.1 已改），否则新库 7 天没请求会被免费档暂停
+3. 真机跑一遍：注册 → 发动态 → 点赞 → 评论 → 删动态 → 记录页打卡 → 换设备登录看同步。
+4. 下一版给 `syncCloud()` 加 `syncEnabled()` 判断，让未登录零请求（详见 §7）。
+5. **不要再 dispatch `main` 分支**（Lite 已冻结，其 workflow 已加 job 级 `if` 跳过）。
+6. 新库 `ctcqmj…` 与 `/lite` 反代路由已弃用，不必再跑 `supabase.sql` 或重新部署反代。
 
-### 可以考虑的（用户提过但没做）
+### 可以考虑的
 
-- 动态的增量同步（`?ts=gt.`）而不是全量替换，这样可以把间隔再放短而不涨请求数
-- 反代加一层短缓存（同一秒内的相同 GET 直接返回），能再省一截
+- 动态 / 记录的增量同步（`?ts=gt.` / `updated_at`），减少响应体积（流量才是先触顶的额度）
+- 反代加一层短缓存
 - 记录页的「本月合计」可视化
 
 ---
@@ -403,3 +454,6 @@ Actions 上：`build-apk.yml` **只能手动触发**（Actions → 选工作流 
 | 表数 | 7 张（含 follows / messages） | 6 张 |
 
 改反代代码时**两个 App 都要回归一遍**：根路径请求必须还能正常走，否则完整版会一起挂。
+
+**当前决策**：`com.pushup.lite` / 新库 / `/lite` 这一列已冻结弃用；主线 `transition/legacy-upgrade`
+走的就是左边这一列（旧库 + 根路径），只是界面换成了 Lite 的四页。
