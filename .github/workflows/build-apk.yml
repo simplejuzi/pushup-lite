@@ -178,11 +178,11 @@ jobs:
           # 否则覆盖安装会被系统判定为降级（INSTALL_FAILED_VERSION_DOWNGRADE）。
           p = Path('android/app/build.gradle')
           s = p.read_text()
-          s2 = re.sub(r'versionCode\s+\d+', 'versionCode 10001', s, count=1)
+          s2 = re.sub(r'versionCode\s+\d+', 'versionCode 10002', s, count=1)
           if s2 == s:
               print('未找到 versionCode，跳过（不影响签名一致性）')
           else:
-              print('versionCode 已设为 10001')
+              print('versionCode 已设为 10002')
           import os
           ver = os.environ.get('APP_VER', '1.1')
           s3 = re.sub(r'versionName\s+[\'"][^\'"]*[\'"]', 'versionName "' + ver + '"', s2, count=1)
