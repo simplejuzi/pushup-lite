@@ -1542,13 +1542,12 @@ const lvCls={"入门":"b","进阶":"i","高阶":"a"};
 const isTime=u=>u==="秒";
 
 /* ============ v1.1：版本、主题、更新 ============ */
-const APP_VERSION="v1.1";
+const APP_VERSION="v1.2";
 /* 应用内更新日志：与 version.json 的 changelog 完全一致 */
 const APP_CHANGELOG=[
-  "PUSHUP Lite 首个版本：只保留 记录 / 数据 / 动态 / 我的 四个页面",
-  "去掉聊天、加好友、通知——想记录就记录，不打扰",
-  "去掉所有图片上传：动态只发文字，头像改成一个 emoji",
-  "云同步请求大幅精简：只在动态页按需同步、字段只取必要的、间隔从 1 秒放到 4 秒",
+  "取消每 8 秒自动拉取，改为点底栏「动态」或下拉刷新时才同步",
+  "停在动态页不再产生后台请求，反代消耗大幅下降",
+  "登录、训练记录同步等一次性请求保持不变"
 ];
 const RELEASE_PAGE="https://github.com/simplejuzi/pushup-lite/releases/latest";
 /* APK 只允许来自本仓库的 Release：第三方镜像万一被篡改，也不至于指向别处 */

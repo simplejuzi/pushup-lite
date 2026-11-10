@@ -1,12 +1,11 @@
 {
-  "version": "1.1",
-  "tag": "v1.1",
-  "apk": "PUSHUP-Lite-v1.1.apk",
-  "apkUrl": "https://github.com/simplejuzi/pushup-lite/releases/download/v1.1/PUSHUP-Lite-v1.1.apk",
+  "version": "1.2",
+  "tag": "v1.2",
+  "apk": "PUSHUP-Lite-v1.2.apk",
+  "apkUrl": "https://github.com/simplejuzi/pushup-lite/releases/download/v1.2/PUSHUP-Lite-v1.2.apk",
   "changelog": [
-    "切换到全新的独立云端（与完整版数据彻底分开）",
-    "动态页同步从每 4 秒 4 个请求优化为每 8 秒 1 个请求，服务器消耗降到约 1/7",
-    "账号校验缓存延长到 60 秒，后台与锁屏时完全停止同步",
-    "修复与优化若干细节"
+    "取消每 8 秒自动拉取，改为点底栏「动态」或下拉刷新时才同步",
+    "停在动态页不再产生后台请求，反代消耗大幅下降",
+    "登录、训练记录同步等一次性请求保持不变"
   ]
 }
