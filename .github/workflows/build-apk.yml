@@ -1,0 +1,286 @@
+name: 打包 PUSHUP Lite APK
+
+# 触发方式：目前**只支持手动**（Actions 页面 → 本工作流 → Run workflow）。
+# v1.1：接手时按要求先关闭自动构建，避免一 push 就跑 Actions。
+# 想恢复「push 到 main 自动打包」，把下面 on.push 整段取消注释即可（indent 已对齐）。
+on:
+  workflow_dispatch:
+#  push:
+#    branches: [main]
+#    paths:
+#      - 'index.html'
+#      - 'manifest.webmanifest'
+#      - 'sw.js'
+#      - 'icons/**'
+#      - 'capacitor.config.json'
+#      - 'package.json'
+#      - 'version.json'
+#      - 'native/**'
+#      - 'signing/**'
+#      - '.github/workflows/build-apk.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      # 版本唯一来源：version.json；同时校验 index.html 的 APP_VERSION，防止两处漂移
+      - name: 读取版本信息
+        run: |
+          python3 - <<'PY'
+          import json
+          d = json.load(open('version.json', encoding='utf-8'))
+          v = d['version']
+          marker = 'const APP_VERSION="v' + v + '";'
+          if marker not in open('index.html', encoding='utf-8').read():
+              raise SystemExit('version.json 与 index.html 的 APP_VERSION 不一致')
+          with open('version.env', 'w', encoding='utf-8') as f:
+              f.write('APP_VER=' + v + '\n')
+              f.write('APK_NAME=' + d['apk'] + '\n')
+              f.write('REL_TAG=' + d['tag'] + '\n')
+          with open('release-notes.md', 'w', encoding='utf-8') as f:
+              f.write('v' + v + '\n')
+              for x in d['changelog']:
+                  f.write('· ' + x + '\n')
+          print('版本 v' + v + ' / 产物 ' + d['apk'])
+          PY
+          cat version.env >> $GITHUB_ENV
+          cat release-notes.md
+
+      - name: 准备 Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 准备 JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      # runner 自带 Android SDK；setup-android@v3 会卡在交互式许可确认，故直接用自带的
+      - name: 确认 Android SDK 组件
+        run: |
+          export ANDROID_HOME="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          SDKMGR="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKMGR" ]; then SDKMGR="$(command -v sdkmanager || true)"; fi
+          if [ ! -x "$SDKMGR" ]; then
+            SDKMGR=$(ls "$ANDROID_HOME"/cmdline-tools/*/bin/sdkmanager 2>/dev/null | head -1)
+          fi
+          if [ ! -x "$SDKMGR" ]; then echo "找不到 sdkmanager"; exit 1; fi
+          echo "sdkmanager: $SDKMGR"
+          yes | "$SDKMGR" --licenses >/dev/null 2>&1 || true
+          "$SDKMGR" --install "platforms;android-34" "build-tools;34.0.0" >/dev/null
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "platforms: $(ls "$ANDROID_HOME/platforms" | tr '\n' ' ')"
+          echo "build-tools: $(ls "$ANDROID_HOME/build-tools" | tr '\n' ' ')"
+
+      # Capacitor 需要一个只含网页资源的 webDir，避免把 docs/预览图等打进 APK
+      - name: 生成本地网页资源 www/
+        run: |
+          mkdir -p www
+          cp index.html manifest.webmanifest sw.js www/
+          cp -r icons www/
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('www/index.html')
+          s = p.read_text(encoding='utf-8')
+          old = 'if("serviceWorker" in navigator&&location.protocol!=="file:"){\n  window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").catch(()=>{});});\n}'
+          if old not in s:
+              raise SystemExit('未找到 Service Worker 注册代码，停止构建')
+          p.write_text(s.replace(old, '/* APK: 资源已在本地，禁用 Service Worker */', 1), encoding='utf-8')
+          print('已关闭 APK 副本的 Service Worker 注册')
+          PY
+          ls -la www
+
+      - name: 安装 Capacitor
+        run: npm install --no-audit --no-fund
+
+      - name: 生成 Android 工程并同步资源
+        run: |
+          npx cap add android
+          npx cap sync android
+          test -f android/app/src/main/assets/public/index.html && echo "网页资源已进 APK assets"
+          npm ls @capacitor/status-bar --depth=0 || true
+          echo "已注册的 Capacitor 插件："
+          find android -name "capacitor.plugins.json" -exec cat {} \; 2>/dev/null || true
+
+      # v1.1：导出走系统分享面板、更新走 App 内下载安装，需要一点原生能力
+      - name: 注入原生能力（导出分享 / App 内安装）
+        run: |
+          python3 - <<'PY'
+          import glob, os
+          from pathlib import Path
+          mains = glob.glob('android/app/src/main/java/**/MainActivity.java', recursive=True)
+          if not mains:
+              raise SystemExit('找不到 MainActivity.java')
+          main = Path(mains[0])
+          pkg = str(main.parent).split('java' + os.sep)[-1].replace(os.sep, '.')
+          if pkg.startswith('.'):
+              pkg = pkg[1:]
+          header = 'package com.pushup.lite;'
+          bridge = Path('native/PUSHUPBridge.java').read_text(encoding='utf-8').replace(header, 'package ' + pkg + ';')
+          (main.parent / 'PUSHUPBridge.java').write_text(bridge, encoding='utf-8')
+          act = Path('native/MainActivity.java').read_text(encoding='utf-8').replace(header, 'package ' + pkg + ';')
+          main.write_text(act, encoding='utf-8')
+          xml = Path('android/app/src/main/res/xml')
+          xml.mkdir(parents=True, exist_ok=True)
+          (xml / 'file_paths.xml').write_text(Path('native/file_paths.xml').read_text(encoding='utf-8'), encoding='utf-8')
+          print('包名: ' + pkg)
+          m = Path('android/app/src/main/AndroidManifest.xml')
+          t = m.read_text(encoding='utf-8')
+          if 'REQUEST_INSTALL_PACKAGES' not in t:
+              i = t.find('<manifest')
+              j = t.find('>', i)
+              t = t[:j+1] + '\n    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />' + t[j+1:]
+              print('已加入 REQUEST_INSTALL_PACKAGES 权限')
+          if 'androidx.core.content.FileProvider' not in t:
+              raise SystemExit('模板缺少 FileProvider，无法分享/安装 APK')
+          m.write_text(t, encoding='utf-8')
+          print('原生能力注入完成')
+          PY
+
+      # Android 14 = API 34；显式锁定 compileSdk / targetSdk，保证在 14/15/16 上可装可跑
+      - name: 适配 Android 14+（API 34）
+        run: |
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+          p = Path('android/variables.gradle')
+          s = p.read_text()
+          s = re.sub(r'minSdkVersion\s*=\s*\d+', 'minSdkVersion = 23', s)
+          s = re.sub(r'compileSdkVersion\s*=\s*\d+', 'compileSdkVersion = 34', s)
+          s = re.sub(r'targetSdkVersion\s*=\s*\d+', 'targetSdkVersion = 34', s)
+          p.write_text(s)
+          print('SDK 配置：')
+          print('\n'.join(l.strip() for l in s.splitlines() if 'SdkVersion' in l))
+          PY
+
+      # runner 每次全新，Gradle 会自动生成随机的 ~/.android/debug.keystore，
+      # 导致每个包签名不同、无法覆盖安装。统一使用仓库里的固定密钥。
+      - name: 固定签名密钥与递增版本号
+        run: |
+          mkdir -p "$HOME/.android"
+          cp signing/debug.keystore "$HOME/.android/debug.keystore"
+          echo "已固定 debug.keystore："
+          keytool -list -keystore "$HOME/.android/debug.keystore" -storepass android | grep -i "PrivateKeyEntry" || true
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+          # versionCode 用构建号，保证覆盖安装被识别为「升级」
+          p = Path('android/app/build.gradle')
+          s = p.read_text()
+          s2 = re.sub(r'versionCode\s+\d+', 'versionCode ${{ github.run_number }}', s, count=1)
+          if s2 == s:
+              print('未找到 versionCode，跳过（不影响签名一致性）')
+          else:
+              print('versionCode 已设为 ${{ github.run_number }}')
+          import os
+          ver = os.environ.get('APP_VER', '1.1')
+          s3 = re.sub(r'versionName\s+[\'"][^\'"]*[\'"]', 'versionName "' + ver + '"', s2, count=1)
+          if s3 != s2:
+              print('versionName 已设为 ' + ver)
+          s2 = s3
+          # Capacitor 模板没有 signingConfigs，AGP 会在全新 runner 上自己生成
+          # 随机 debug.keystore。必须显式让 Gradle 读仓库里的固定密钥。
+          cfg = '\n    signingConfigs {\n        debug {\n'
+          cfg += "            storeFile file('../../signing/debug.keystore')\n"
+          cfg += "            storePassword 'android'\n"
+          cfg += "            keyAlias 'androiddebugkey'\n"
+          cfg += "            keyPassword 'android'\n"
+          cfg += '        }\n    }\n'
+          if 'signingConfigs' not in s2:
+              k = s2.find('android {')
+              if k >= 0:
+                  s2 = s2[:k + len('android {')] + cfg + s2[k + len('android {'):]
+                  print('已注入固定 signingConfigs.debug')
+              else:
+                  print('警告：未找到 android { 块，签名可能仍不固定')
+          p.write_text(s2)
+          # 启动瞬间由原生主题画状态栏，先统一成深色配开屏页；
+          # 页面加载后 StatusBar 插件按浅色 / 深色 / 跟随系统接管。
+          q = Path('android/app/src/main/res/values/styles.xml')
+          if q.exists():
+              t = q.read_text()
+              m = re.search(r'(<style name="AppTheme\.NoActionBar"[^>]*>)', t)
+              if m and 'android:statusBarColor' not in t:
+                  t = t[:m.end()] + ('\n        <item name="android:statusBarColor">#1B1C22</item>'
+                                    '\n        <item name="android:windowLightStatusBar">false</item>') + t[m.end():]
+                  q.write_text(t)
+                  print('启动状态栏已设为深色（配开屏页）')
+              else:
+                  print('styles.xml 未改动（已配置或样式名不同，插件会接管）')
+          else:
+              print('styles.xml 不存在，跳过')
+          PY
+
+      - name: 换成默认橙色 P 桌面图标
+        run: |
+          for d in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
+            dest="android/app/src/main/res/mipmap-$d"
+            mkdir -p "$dest"
+            cp icons/icon-512.png "$dest/ic_launcher.png"
+            cp icons/icon-512.png "$dest/ic_launcher_round.png"
+          done
+          # 去掉自适应图标 XML，统一用 PNG 图标
+          rm -rf android/app/src/main/res/mipmap-anydpi-v26
+          echo "桌面图标已替换"
+
+      - name: 构建 debug APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
+          ls -lh app/build/outputs/apk/debug/
+
+      - name: 收集产物
+        run: |
+          cp android/app/build/outputs/apk/debug/app-debug.apk "$APK_NAME"
+          ls -lh "$APK_NAME"
+          AAPT="$ANDROID_HOME/build-tools/34.0.0/aapt"
+          if [ -x "$AAPT" ]; then
+            "$AAPT" dump badging "$APK_NAME" 2>/dev/null | grep -iE "package:|sdkVersion|application-label" | head -6 || true
+          else
+            echo "aapt 不可用，跳过包信息打印"
+          fi
+          echo "=== 签名证书指纹（APK 必须与仓库 keystore 完全一致）==="
+          APK_FP=$(keytool -printcert -jarfile "$APK_NAME" 2>/dev/null | grep -i "SHA256:" | head -1 | tr -d '\r' | sed 's/.*SHA256: *//')
+          KS_FP=$(keytool -list -v -keystore signing/debug.keystore -storepass android 2>/dev/null | grep -i "SHA256:" | head -1 | tr -d '\r' | sed 's/.*SHA256: *//')
+          echo "APK 指纹: $APK_FP"
+          echo "密钥指纹: $KS_FP"
+          if [ -z "$APK_FP" ] || [ "$APK_FP" != "$KS_FP" ]; then
+            echo "固定签名未生效，停止出包"
+            exit 1
+          fi
+          echo "签名一致，此包及其后的包可直接覆盖安装"
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: PUSHUP-Lite-APK
+          path: ${{ env.APK_NAME }}
+          if-no-files-found: error
+          retention-days: 90
+
+      # Release 的版本号与更新日志来自 version.json，不再是「自动构建」的固定话术
+      - name: 发布到 Releases
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "发布版本 $REL_TAG / $APK_NAME"
+          if gh release view "$REL_TAG" >/dev/null 2>&1; then
+            gh release upload "$REL_TAG" "$APK_NAME" --clobber
+            gh release edit "$REL_TAG" --title "PUSHUP Lite v$APP_VER" --notes-file release-notes.md
+            echo "已更新 Release $REL_TAG"
+          else
+            gh release create "$REL_TAG" "$APK_NAME" --title "PUSHUP Lite v$APP_VER" --notes-file release-notes.md
+            echo "已创建 Release $REL_TAG"
+          fi

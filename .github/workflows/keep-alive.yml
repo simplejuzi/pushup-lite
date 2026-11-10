@@ -1,0 +1,22 @@
+name: 保活 Supabase 免费项目
+
+# 免费档 7 天无 API 请求会自动暂停。每 3 天 ping 一次即可避免。
+# 注意：本文件不在 build-apk.yml 的 on.push.paths 里，不会触发 APK 构建。
+# 这里用的是 publishable key（设计上可公开，APK 内也内置了同一个值），不是 service_role。
+# v1.1：项目已从完整版的 zqrlolyntlcewrwfhumd 迁到 Lite 独立项目 ctcqmjssqineuubadqty
+
+on:
+  schedule:
+    - cron: "17 3 */3 * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST
+        run: |
+          curl -s -o /dev/null -w "Supabase HTTP %{http_code}\n" --max-time 25 \
+            -H "apikey: sb_publishable_5YyGhtbw404N3whh9EhLRw_5DCQnEHT" \
+            -H "Authorization: Bearer sb_publishable_5YyGhtbw404N3whh9EhLRw_5DCQnEHT" \
+            "https://ctcqmjssqineuubadqty.supabase.co/rest/v1/profiles?select=id&limit=1" || true

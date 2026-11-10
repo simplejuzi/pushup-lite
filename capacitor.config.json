@@ -1,0 +1,18 @@
+{
+  "appId": "com.pushup.lite",
+  "appName": "PUSHUP Lite",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": false
+  },
+  "plugins": {
+    "StatusBar": {
+      "overlaysWebView": false,
+      "backgroundColor": "#1B1C22",
+      "style": "DARK"
+    }
+  }
+}

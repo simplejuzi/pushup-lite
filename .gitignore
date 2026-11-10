@@ -1,0 +1,29 @@
+# Capacitor / Node 构建产物
+node_modules/
+android/
+ios/
+dist/
+# 构建时由 index.html 等动态生成，不入库
+www/
+
+# Android 签名与安装包
+*.apk
+*.aab
+*.jks
+*.keystore
+# 例外：固定 debug 签名，让每次云端构建签名一致、可直接覆盖升级
+# 仅用于自用 debug 包，私钥是公开的，切勿用于上架或正式签名
+!signing/debug.keystore
+
+# 系统与编辑器
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# 本地临时文件
+*.log
+*.tmp
+
+# 本地预览文件（图标已内联，体积大，不入库）
+*-预览.html
