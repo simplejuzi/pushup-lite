@@ -1324,7 +1324,8 @@ body.dark .back-btn{box-shadow:none}
           <div class="about-row"><span class="k">作者</span><span class="v">再多吃一口饭</span></div>
           <div class="about-row"><span class="k">酷安</span><a href="https://www.coolapk.com/u/2456761" target="_blank" rel="noopener">作者主页 →</a></div>
           <div class="about-row"><span class="k">项目</span><a href="https://github.com/simplejuzi/pushup-lite" target="_blank" rel="noopener">GitHub 仓库 →</a></div>
-          <div class="about-row"><span class="k">数据</span><span class="v">本机优先 · 登录后云端同步</span></div>
+          <div class="about-row"><span class="k">数据</span><span class="v">本机优先 · 登录后同步</span></div>
+          <div class="about-row" onclick="openServerAddr()" style="cursor:pointer"><span class="k">接口</span><span class="v" id="sbAddrTag">—</span></div>
           <div class="about-row"><span class="k">社区</span><span class="v" id="socialModeTag">—</span></div>
         </div>
         <div class="foot-note2">PUSHUP Lite · 为每天多一点坚持而做<br>登录后训练记录自动同步，换设备登录同一账号即可</div>
@@ -1429,15 +1430,15 @@ body.dark .back-btn{box-shadow:none}
       </div>
     </div>
 
-    <!-- v1.9：服务器地址（官方直连 / 自建反代） -->
+    <!-- v1.34：MySQL 接口地址 -->
     <div class="modal" id="serverModal" onclick="modalBackdropClose(event,'serverModal')">
       <div class="sheet">
-        <div class="sh-t">服务器地址</div>
-        <div class="sh-s">App 通过这个地址访问云端。中国大陆直连 Supabase 的 API 域名经常被阻断，这时改成你自己的反代地址即可。</div>
-        <input class="srv-inp" id="srvInput" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://xxxx.scf.tencentcs.com">
-        <div class="srv-hint" id="srvHint">当前使用：<b id="srvCur">—</b><br>默认走自建代理（国内直连 Supabase 会被阻断）；点「恢复默认」回到代理，点「改用官方直连」切回官方</div>
+        <div class="sh-t">接口地址</div>
+        <div class="sh-s">App 通过这个地址访问你自己的 MySQL 接口，不再经过 Supabase，也不需要反向代理。</div>
+        <input class="srv-inp" id="srvInput" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://你的域名/pushup/api.php">
+        <div class="srv-hint" id="srvHint">当前使用：<b id="srvCur">—</b><br>填 api.php 的完整地址；换服务器时只改这里，不用重新打包</div>
         <div class="sh-btns"><button onclick="resetServerAddr()">恢复默认</button><button class="primary" onclick="applyServerAddr()">保存并重启</button></div>
-        <div class="sh-btns" style="margin-top:8px"><button onclick="testServerAddr()">测一下这个地址</button><button onclick="useOfficialAddr()">改用官方直连</button></div>
+        <div class="sh-btns" style="margin-top:8px"><button onclick="testServerAddr()">测一下这个地址</button></div>
       </div>
     </div>
     <!-- v1.1：按动作生成导入模板 -->
@@ -1676,13 +1677,14 @@ const lvCls={"入门":"b","进阶":"i","高阶":"a"};
 const isTime=u=>u==="秒";
 
 /* ============ v1.1：版本、主题、更新 ============ */
-const APP_VERSION="v1.33";
+const APP_VERSION="v1.34";
 /* 应用内更新日志：与 version.json 的 changelog 完全一致 */
 const APP_CHANGELOG=[
-  "发布动态、评论真正检测服务器结果：成功 / 失败都有提示",
-  "失败不写入本机、不清空输入、弹窗保留，可直接重试",
-  "离线立即提醒，8 秒无响应按超时提醒",
-  "发布期间按钮禁用防重复提交；修复结果提示条不显示的问题"
+  "数据库换成自己的 MySQL 8.0，Supabase 和腾讯云反代全部停用",
+  "接口地址改为 http://154.12.36.171:27080/pushup/api.php",
+  "允许明文 HTTP 请求，网络受限的服务器也能直连",
+  "设置 → 关于 → 接口 可随时换地址，不用重新打包",
+  "登录、训练记录同步、动态、评论、点赞全部走新接口"
 ];
 /* 过渡版 v1.29：这个包覆盖安装在原 PUSHUP App 上，包名是 com.simplejuzi.pushup。
    更新检查必须继续指向原仓库 simplejuzi/PUSHUP，否则收不到后续版本。
@@ -1697,14 +1699,9 @@ const UPDATE_ENDPOINTS=[
   "https://ghproxy.net/https://raw.githubusercontent.com/simplejuzi/PUSHUP/main/version.json"
 ];
 const PKEY="fitness_palette_v1";
-/* v1.9：服务器地址（官方直连 / 自建反代） */
+/* v1.34：MySQL 接口地址（不再是 Supabase / 反代） */
 function serverTagText(){
-  const cur=sbUrlSaved();
-  if(!cur)return "自建代理（默认）";
-  if(sbUrlNorm(cur)===sbUrlNorm(SB_URL_DEFAULT))return "官方直连";
-  /* 不依赖 URL 对象，老 WebView 也能用 */
-  const m=cur.match(/^https?:\/\/([^\/]+)/i);
-  return m?("代理 · "+m[1]):"自定义";
+  return SB_URL?"自定义接口":"未配置";
 }
 function serverHost(){
   const m=String(SB_URL||"").match(/^https?:\/\/([^\/]+)/i);
@@ -1714,7 +1711,7 @@ function syncServerAddrUI(){
   const tag=document.getElementById("sbAddrTag");
   if(tag)tag.innerHTML=serverTagText()+' <span class="ar">›</span>';
   const cur=document.getElementById("srvCur");
-  if(cur)cur.textContent=SB_URL.replace(/^https?:\/\//,"");
+  if(cur)cur.textContent=SB_URL?SB_URL.replace(/^https?:\/\//,""):"未配置（本机模式）";
 }
 function openServerAddr(){
   const inp=document.getElementById("srvInput");
@@ -1730,55 +1727,46 @@ function closeServerAddr(){
 function resetServerAddr(){
   try{localStorage.removeItem(SB_URL_KEY);}catch(e){}
   if(sbUrlSaved()){toast("没能清掉，再试一次");return;}
-  toast("已恢复默认（自建代理），正在重启…");
-  setTimeout(appReload,700);
-}
-/* v1.10：想直连官方时用这个（国内网络一般连不上，留着给换个网络环境的人） */
-function useOfficialAddr(){
-  try{localStorage.setItem(SB_URL_KEY,sbUrlNorm(SB_URL_DEFAULT));}catch(e){toast("保存失败");return;}
-  toast("已改用官方直连，正在重启…");
+  toast("已恢复默认，正在重启…");
   setTimeout(appReload,700);
 }
 function applyServerAddr(){
   const inp=document.getElementById("srvInput");
   const v=sbUrlNorm(inp?inp.value:"");
-  if(!v){toast("地址是空的；想回默认就点「恢复默认」");return;}
-  if(!/^https:\/\//i.test(v)){toast("要 https:// 开头，http 会被系统当混合内容拦掉");return;}
+  if(!v){toast("地址是空的；想用本机模式就保持默认");return;}
+  if(!/^https?:\/\//i.test(v)){toast("地址要以 http:// 或 https:// 开头");return;}
+  const def=sbUrlNorm(API_BASE_DEFAULT);
   try{
-    if(v===sbUrlNorm(SB_URL_DEFAULT))localStorage.removeItem(SB_URL_KEY);
+    if(def&&v===def)localStorage.removeItem(SB_URL_KEY);
     else localStorage.setItem(SB_URL_KEY,v);
   }catch(e){toast("保存失败，检查手机存储空间");return;}
-  if((sbUrlSaved()||SB_URL_RELAY)!==v){toast("保存后校验不一致，再试一次");return;}
+  if((sbUrlSaved()||def)!==v){toast("保存后校验不一致，再试一次");return;}
   toast("已保存，正在重启…");
   setTimeout(appReload,700);
 }
 function testServerAddr(){
   const inp=document.getElementById("srvInput");
   const v=sbUrlNorm(inp?inp.value:"")||SB_URL;
+  if(!v){toast("先填接口地址，例如 https://域名/pushup/api.php");return;}
   const host=v.replace(/^https?:\/\//,"");
   const t0=Date.now();
   toast("正在测 "+host+" …");
-  const run=(url,withKey)=>fetch(url,{headers:withKey?{"apikey":SB_ANON,"Accept":"application/json"}:{"Accept":"application/json"},cache:"no-store"});
-  run(v+"/rest/v1/",true).then(function(r){
+  fetch(apiUrlFor(v,"/ping"),{headers:{"Accept":"application/json"},cache:"no-store"}).then(function(r){
     return r.text().then(function(t){
       const ms=Date.now()-t0;
-      if(t.indexOf("No API key found")>=0||r.ok){
-        toast((sbUrlNorm(v)===sbUrlNorm(SB_URL)?"地址可用":"地址可用（还没保存）")+" · "+ms+"ms");
+      let j={};try{j=JSON.parse(t);}catch(e){}
+      if(r.ok&&j&&j.ok){
+        toast((sbUrlNorm(v)===sbUrlNorm(SB_URL)?"接口可用":"接口可用（还没保存）")+" · "+(j.db?"数据库正常":"数据库没连上")+" · "+ms+"ms");
       }else if(r.status===404){
-        toast("通到了但 404：地址后面别带路径，只要 https://域名");
-      }else if(r.status===401||r.status===403){
-        toast("通到了但没权限（"+r.status+"）：key 不对或被行级权限挡住");
+        toast("404：地址不对，应该是 …/api.php");
+      }else if(r.status===403){
+        toast("403：接口被拦了，检查目录权限或防火墙");
       }else{
         toast("有响应但不对（"+r.status+"）："+String(t).slice(0,40));
       }
     });
   }).catch(function(){
-    /* 失败时再裸测一次连通性，区分「跨域被挡」还是「根本连不上」 */
-    run(v+"/rest/v1/",false).then(function(r){
-      toast("能连上但跨域没放开（"+r.status+"）· 反代要返回 Access-Control-Allow-Origin");
-    }).catch(function(){
-      toast("连不上 "+host+" —— 网络不通，或云函数没起来 / 地域选错");
-    });
+    toast("连不上 "+host+" —— 检查域名、HTTPS 证书和接口文件");
   });
 }
 function openChangelog(){
@@ -3983,37 +3971,40 @@ function renderFeedMe(){
 function feedMeClick(){if(sMe())openPost();else openAuth();}
 
 /* ==================================================================
-   v1.5 社区：动态 / 好友 / 最简聊天
-   双模式：SB_URL + SB_ANON 留空 → 本地模式（localStorage，可完整点动）
-           填好后 → Supabase Auth + REST（轮询，无需 SDK、不改构建脚本）
+   v1.34 社区：动态 / 找朋友 / 训练数据同步
+   后端：MySQL 8.0 + 单文件接口 mysql/api.php（不再用 Supabase，也不需要反代）
+   双模式：接口地址留空 → 本地模式（localStorage，可完整点动）
+           填好后 → 自己的接口（注册 / 登录 / 同步 / 动态）
    ================================================================== */
-/* 过渡版 v1.29：故意沿用完整版的旧 Supabase 项目 + 根路径反代。
-   老用户的账号在旧库 auth.users，登录态 token 也是旧库签发的，
-   这样覆盖安装后无需重新注册，云端训练记录 / 动态 / 点赞 / 评论全部保留。
-   旧库只需跑一次 transition-legacy-patch.sql（加 emoji 列 + lite_bundle 函数，
-   不删任何表和列），完整版残留数据不受影响。 */
-const SB_URL_DEFAULT="https://zqrlolyntlcewrwfhumd.supabase.co";
-const SB_ANON="sb_publishable_O7AmNzcRHCKtWThXB9_8tg_xWaMoRQU";
-/* v1.9：服务器地址可在「设置 → 服务器」里改，不用重新打包。
-   v1.10：国内直连 *.supabase.co 会被 TLS 阻断，所以**默认走自建反代**
-   （腾讯云云函数，代码见仓库 supabase-proxy/），装完直接能用；
-   想直连官方可以在同一页点「改用官方直连」。 */
-const SB_URL_RELAY="https://1301392226-ickz22vd03.ap-guangzhou.tencentscf.com";
-const SB_URL_KEY="pushup_sb_url";
+/* 部署好 mysql/api.php 后，把这里改成完整地址，例如：
+   const API_BASE_DEFAULT="https://你的域名/pushup/api.php"; */
+const API_BASE_DEFAULT="http://154.12.36.171:27080/pushup/api.php";
+const SB_URL_KEY="pushup_api_base";     /* 换新 key，避免继承旧的 Supabase 地址 */
 function sbUrlNorm(v){
   let u=String(v||"").trim().replace(/^["'\s]+|["'\s]+$/g,"");
   if(!u)return "";
-  if(!/^https?:\/\//i.test(u))u="https://"+u.replace(/^\/+/,"");
-  u=u.replace(/\/+(rest|auth|storage|realtime)\/v1.*$/i,"");   /* 误贴接口路径时截掉 */
+  if(!/^https?:\/\//i.test(u)){
+    /* 没写协议：IP 或带端口的按 http 补（服务器端口受限时只有 http 可用），其余按 https */
+    const looksIp=/^(\d{1,3}\.){3}\d{1,3}(:\d+)?(\/|$)/.test(u)||/^[^\s\/]+:\d+(\/|$)/.test(u);
+    u=(looksIp?"http://":"https://")+u.replace(/^\/+/,"");
+  }
+  u=u.replace(/\?.*$/,"");                       /* 只保留到 .php */
+  u=u.replace(/\/+(rest|auth)\/v1.*$/i,"");      /* 误贴旧接口路径时截掉 */
+  if(!/\.php$/i.test(u))u=u.replace(/\/+$/,"")+"/api.php";
   return u.replace(/\/+$/,"");
 }
 function sbUrlSaved(){try{return sbUrlNorm(localStorage.getItem(SB_URL_KEY)||"");}catch(e){return "";}}
-/* 没手动设过就用反代；设过就用设的（包括"官方直连"） */
-const SB_URL=(sbUrlSaved()||SB_URL_RELAY);
+const SB_URL=(sbUrlSaved()||sbUrlNorm(API_BASE_DEFAULT));
+/* 所有请求统一走 api.php?path=...，不依赖服务器的 rewrite / PATH_INFO */
+function apiUrlFor(base,p){
+  if(!base)return "";
+  return base+(base.indexOf("?")>=0?"&":"?")+"path="+encodeURIComponent(String(p||""));
+}
+function apiUrl(p){return apiUrlFor(SB_URL,p);}
 /* v1.6：邮箱当账号。只做格式校验，不发验证码、不做邮箱确认 */
 const EMAIL_RE=/^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/;
 const SOC_KEY="pushup_social_v1";
-const CLOUD=()=>!!(SB_URL&&SB_ANON);
+const CLOUD=()=>!!SB_URL;
 let CUR_TAB="record",SOC=null,SB_TOKEN="",SB_RTOKEN="",feedFilter="all",
     TMAP={},REMOTE={},_lastSet=null,_setTimer=null,_recTimer=null,_pullAt=0,
     SYNC_STATE="off",_lastSyncAt=0,
@@ -4068,7 +4059,7 @@ function cloudNameTaken(name,exceptId){
     if(!CLOUD())return Promise.resolve(false);
     const raw=String(name||"").trim();
     if(!raw)return Promise.resolve(false);
-    return fetch(SB_URL+"/rest/v1/profiles?select=id,name&name=ilike."+encodeURIComponent(raw)+"&limit=3",
+    return fetch(apiUrl("/rest/v1/profiles?select=id,name&name=ilike."+encodeURIComponent(raw)+"&limit=3"),
         {headers:sbH()})
       .then(function(r){return r.ok?r.json():[];})
       .then(function(a){
@@ -4081,8 +4072,8 @@ function cloudNameTaken(name,exceptId){
 }
 
 /* ---- 云端适配（纯 fetch，无 SDK；写操作先落本地再静默上行） ---- */
-function sbH(){return {"apikey":SB_ANON,"Content-Type":"application/json",
-  "Authorization":"Bearer "+(SB_TOKEN||SB_ANON),"Prefer":"return=representation"};}
+function sbH(){return {"Content-Type":"application/json",
+  "Authorization":"Bearer "+(SB_TOKEN||""),"Prefer":"return=representation"};}
 function sbFetch(p,o){return sbFetchRaw(p,o,true);}
 /* v1.24：带 token 自动刷新。access_token 约 1 小时过期，之前 401 被静默吞成 null，
    结果网络显示「已连接」却什么都拉不到（头像不更新/删动态不消失/消息发不出）。
@@ -4090,7 +4081,7 @@ function sbFetch(p,o){return sbFetchRaw(p,o,true);}
    返回值保持原语义：成功 → JSON；失败 → null（并可能置 AUTH_EXPIRED）。 */
 let AUTH_EXPIRED=false;
 function sbFetchRaw(p,o,canRefresh){
-  return fetch(SB_URL+p,Object.assign({headers:sbH()},o||{}))
+  return fetch(apiUrl(p),Object.assign({headers:sbH()},o||{}))
   .then(function(r){
     noteNet(true);
     if(r.status===401&&SB_TOKEN&&SB_RTOKEN&&canRefresh){
@@ -4110,9 +4101,9 @@ let _refreshing=null;
 function sbTryRefresh(){
   if(!SB_RTOKEN)return Promise.resolve(false);
   if(_refreshing)return _refreshing;
-  _refreshing=fetch(SB_URL+"/auth/v1/token?grant_type=refresh_token",{
+  _refreshing=fetch(apiUrl("/auth/v1/token?grant_type=refresh_token"),{
     method:"POST",
-    headers:{"apikey":SB_ANON,"Content-Type":"application/json"},
+    headers:{"Content-Type":"application/json"},
     body:JSON.stringify({refresh_token:SB_RTOKEN})
   }).then(function(r){
     return r.text().then(function(t){
@@ -4150,8 +4141,8 @@ function verifyAccount(){
   const now=Date.now();
   if(now-_verifiedAt<60000)return Promise.resolve(true);   /* 60 秒内已验过，跳过 */
   if(_verifyRunning)return _verifyRunning;
-  _verifyRunning=fetch(SB_URL+"/auth/v1/user",{
-    method:"GET",headers:{"apikey":SB_ANON,"Authorization":"Bearer "+SB_TOKEN}
+  return _verifyRunning=fetch(apiUrl("/auth/v1/user"),{
+    method:"GET",headers:{"Authorization":"Bearer "+SB_TOKEN}
   }).then(function(r){
     noteNet(true);
     if(r.ok){_verifiedAt=Date.now();return r.json().then(function(j){return !!j&&j.id===sLoad().session;}).catch(function(){return true;});}
@@ -4159,8 +4150,8 @@ function verifyAccount(){
       /* token 失效：先试着用 refresh_token 续期再验一次 */
       return sbTryRefresh().then(function(ok){
         if(!ok)return false;
-        return fetch(SB_URL+"/auth/v1/user",{method:"GET",
-          headers:{"apikey":SB_ANON,"Authorization":"Bearer "+SB_TOKEN}})
+        return fetch(apiUrl("/auth/v1/user"),{method:"GET",
+          headers:{"Authorization":"Bearer "+SB_TOKEN}})
           .then(function(r2){noteNet(true);
             if(r2.ok){_verifiedAt=Date.now();return r2.json().then(function(j){return !!j&&j.id===sLoad().session;}).catch(function(){return true;});}
             return false;}).catch(function(){return false;});
@@ -4216,9 +4207,9 @@ function netProbe(force){
   if(!force&&Date.now()-NET_AT<30000)return Promise.resolve(NET_OK);
   const ctl=(typeof AbortController!=="undefined")?new AbortController():null;
   const timer=ctl?setTimeout(function(){try{ctl.abort();}catch(e){}},6000):null;
-  const opt={headers:{"apikey":SB_ANON,"Accept":"application/json"},cache:"no-store"};
+  const opt={headers:{"Accept":"application/json"},cache:"no-store"};
   if(ctl)opt.signal=ctl.signal;
-  return fetch(SB_URL+"/rest/v1/",opt).then(function(r){
+  return fetch(apiUrl("/ping"),opt).then(function(r){
     if(timer)clearTimeout(timer);noteNet(true);return true;
   }).catch(function(){
     if(timer)clearTimeout(timer);noteNet(false);return false;
@@ -4227,7 +4218,7 @@ function netProbe(force){
 function sbPush(t,row,signal){if(!CLOUD())return Promise.resolve(false);
   return sbPushRaw(t,row,true,signal);}
 function sbPushRaw(t,row,canRefresh,signal){
-  return fetch(SB_URL+"/rest/v1/"+t,{method:"POST",headers:sbH(),body:JSON.stringify(row),signal:signal||undefined})
+  return fetch(apiUrl("/rest/v1/"+t),{method:"POST",headers:sbH(),body:JSON.stringify(row),signal:signal||undefined})
     .then(function(r){
       noteNet(true);
       if(r.status===401&&SB_TOKEN&&SB_RTOKEN&&canRefresh){
@@ -4268,8 +4259,8 @@ function netGuard(label,okText,writeFn){
 }
 /* v1.9：把 HTTP 状态也带回来，才能分清「网络没通」和「服务器说不对」 */
 function sbAuth(p,b){
-  return fetch(SB_URL+"/auth/v1/"+p,{method:"POST",
-    headers:{"apikey":SB_ANON,"Content-Type":"application/json"},body:JSON.stringify(b)})
+  return fetch(apiUrl("/auth/v1/"+p),{method:"POST",
+    headers:{"Content-Type":"application/json"},body:JSON.stringify(b)})
     .then(function(r){
       return r.text().then(function(t){
         var j={};
@@ -4330,7 +4321,7 @@ function sbUpdateProfile(u){
   return sbUpdateProfileRaw(u,true);
 }
 function sbUpdateProfileRaw(u,canRefresh){
-  return fetch(SB_URL+"/rest/v1/profiles?id=eq."+encodeURIComponent(u.id),{
+  return fetch(apiUrl("/rest/v1/profiles?id=eq."+encodeURIComponent(u.id)),{
     method:"PATCH",
     headers:Object.assign(sbH(),{"Prefer":"return=minimal"}),
     body:JSON.stringify({name:u.name,emoji:u.emoji||u.avatar||""})
@@ -4545,7 +4536,7 @@ function knownMail(m){return knownMails().indexOf(String(m||"").trim().toLowerCa
 
 function authWhyText(why,reg){
   const M={
-    net:"连不上服务器：检查手机网络，或在「设置 → 服务器」里换成代理地址",
+    net:"连不上服务器：检查手机网络，或在「设置 → 关于 → 接口」里确认地址",
     email_bad:"邮箱格式不对，应该像 name@qq.com 这样",
     email_taken:"这个邮箱已经注册过了，直接登录就行",
     name_taken:"这个名称已经有人用了，换一个吧",
@@ -5109,7 +5100,7 @@ function sbWriteRaw(p,method,body,prefer,canRefresh){
   const h=sbH();if(prefer)h.Prefer=prefer;
   const o={method:method,headers:h};
   if(body!==undefined)o.body=JSON.stringify(body);
-  return fetch(SB_URL+p,o).then(function(r){
+  return fetch(apiUrl(p),o).then(function(r){
     if(r.status===401&&SB_TOKEN&&SB_RTOKEN&&canRefresh){
       return sbTryRefresh().then(function(ok){
         if(ok)return sbWriteRaw(p,method,body,prefer,false);

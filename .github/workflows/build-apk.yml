@@ -143,6 +143,13 @@ jobs:
               print('已加入 REQUEST_INSTALL_PACKAGES 权限')
           if 'androidx.core.content.FileProvider' not in t:
               raise SystemExit('模板缺少 FileProvider，无法分享/安装 APK')
+          # v1.34：接口跑在 http://…:27080（服务器只放开了高位端口，没有证书），
+          # WebView 默认拦明文请求，这里显式允许；页面本身仍是 https://localhost
+          if 'usesCleartextTraffic' not in t:
+              i = t.find('<application')
+              j = t.find('>', i)
+              t = t[:j] + ' android:usesCleartextTraffic="true"' + t[j:]
+              print('已允许明文 HTTP（usesCleartextTraffic=true）')
           m.write_text(t, encoding='utf-8')
           print('原生能力注入完成')
           PY
@@ -178,11 +185,11 @@ jobs:
           # 否则覆盖安装会被系统判定为降级（INSTALL_FAILED_VERSION_DOWNGRADE）。
           p = Path('android/app/build.gradle')
           s = p.read_text()
-          s2 = re.sub(r'versionCode\s+\d+', 'versionCode 10004', s, count=1)
+          s2 = re.sub(r'versionCode\s+\d+', 'versionCode 10005', s, count=1)
           if s2 == s:
               print('未找到 versionCode，跳过（不影响签名一致性）')
           else:
-              print('versionCode 已设为 10004')
+              print('versionCode 已设为 10005')
           import os
           ver = os.environ.get('APP_VER', '1.1')
           s3 = re.sub(r'versionName\s+[\'"][^\'"]*[\'"]', 'versionName "' + ver + '"', s2, count=1)
