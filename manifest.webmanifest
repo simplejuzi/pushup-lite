@@ -1,8 +1,8 @@
 {
   "id": "./",
-  "name": "PUSHUP Lite · 俯卧撑记录",
-  "short_name": "PUSHUP Lite",
-  "description": "以俯卧撑为核心的自重训练记录工具。每天 3 秒记完，数据只存在本机，离线可用。",
+  "name": "PUSHUP · 俯卧撑训练记录",
+  "short_name": "PUSHUP",
+  "description": "以俯卧撑为核心的自重训练记录工具。每天几十秒记完，登录后自动同步，随时导出备份。",
   "lang": "zh-CN",
   "start_url": "./",
   "scope": "./",

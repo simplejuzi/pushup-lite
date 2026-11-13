@@ -1,4 +1,4 @@
-name: 打包 PUSHUP Lite APK
+name: 打包 PUSHUP APK
 
 # 触发方式：目前**只支持手动**（Actions 页面 → 本工作流 → Run workflow）。
 # v1.1：接手时按要求先关闭自动构建，避免一 push 就跑 Actions。
@@ -126,8 +126,9 @@ jobs:
           if pkg.startswith('.'):
               pkg = pkg[1:]
           header = 'package com.pushup.lite;'
-          bridge = Path('native/PUSHUPBridge.java').read_text(encoding='utf-8').replace(header, 'package ' + pkg + ';')
-          (main.parent / 'PUSHUPBridge.java').write_text(bridge, encoding='utf-8')
+          for jf in ['PUSHUPBridge.java', 'ReminderReceiver.java', 'ReminderBoot.java']:
+              src = Path('native/' + jf).read_text(encoding='utf-8').replace(header, 'package ' + pkg + ';')
+              (main.parent / jf).write_text(src, encoding='utf-8')
           act = Path('native/MainActivity.java').read_text(encoding='utf-8').replace(header, 'package ' + pkg + ';')
           main.write_text(act, encoding='utf-8')
           xml = Path('android/app/src/main/res/xml')
@@ -150,6 +151,29 @@ jobs:
               j = t.find('>', i)
               t = t[:j] + ' android:usesCleartextTraffic="true"' + t[j:]
               print('已允许明文 HTTP（usesCleartextTraffic=true）')
+          # v1.36：每日提醒需要通知权限，以及开机后重新挂闹钟
+          for perm in ['android.permission.POST_NOTIFICATIONS',
+                       'android.permission.RECEIVE_BOOT_COMPLETED']:
+              key = perm.rsplit('.', 1)[-1]
+              if key not in t:
+                  i = t.find('<manifest')
+                  j = t.find('>', i)
+                  t = t[:j+1] + '\n    <uses-permission android:name="' + perm + '" />' + t[j+1:]
+                  print('已加入 ' + key + ' 权限')
+          if 'ReminderReceiver' not in t:
+              receivers = (
+                  '\n        <receiver android:name="' + pkg + '.ReminderReceiver" android:exported="false" />'
+                  '\n        <receiver android:name="' + pkg + '.ReminderBoot" android:exported="false">'
+                  '\n            <intent-filter>'
+                  '\n                <action android:name="android.intent.action.BOOT_COMPLETED" />'
+                  '\n                <action android:name="android.intent.action.QUICKBOOT_POWERON" />'
+                  '\n            </intent-filter>'
+                  '\n        </receiver>')
+              k = t.rfind('</application>')
+              if k < 0:
+                  raise SystemExit('清单里找不到 </application>')
+              t = t[:k] + receivers + '\n    ' + t[k:]
+              print('已注册每日提醒接收器')
           m.write_text(t, encoding='utf-8')
           print('原生能力注入完成')
           PY
@@ -185,11 +209,11 @@ jobs:
           # 否则覆盖安装会被系统判定为降级（INSTALL_FAILED_VERSION_DOWNGRADE）。
           p = Path('android/app/build.gradle')
           s = p.read_text()
-          s2 = re.sub(r'versionCode\s+\d+', 'versionCode 10005', s, count=1)
+          s2 = re.sub(r'versionCode\s+\d+', 'versionCode 10009', s, count=1)
           if s2 == s:
               print('未找到 versionCode，跳过（不影响签名一致性）')
           else:
-              print('versionCode 已设为 10005')
+              print('versionCode 已设为 10009')
           import os
           ver = os.environ.get('APP_VER', '1.1')
           s3 = re.sub(r'versionName\s+[\'"][^\'"]*[\'"]', 'versionName "' + ver + '"', s2, count=1)
@@ -272,7 +296,7 @@ jobs:
       - name: 上传构建产物
         uses: actions/upload-artifact@v4
         with:
-          name: PUSHUP-Lite-APK
+          name: PUSHUP-APK
           path: ${{ env.APK_NAME }}
           if-no-files-found: error
           retention-days: 90
@@ -288,9 +312,9 @@ jobs:
           echo "发布版本 $REL_TAG / $APK_NAME"
           if gh release view "$REL_TAG" >/dev/null 2>&1; then
             gh release upload "$REL_TAG" "$APK_NAME" --clobber
-            gh release edit "$REL_TAG" --title "PUSHUP Lite v$APP_VER" --notes-file release-notes.md
+            gh release edit "$REL_TAG" --title "PUSHUP v$APP_VER" --notes-file release-notes.md
             echo "已更新 Release $REL_TAG"
           else
-            gh release create "$REL_TAG" "$APK_NAME" --title "PUSHUP Lite v$APP_VER" --notes-file release-notes.md
+            gh release create "$REL_TAG" "$APK_NAME" --title "PUSHUP v$APP_VER" --notes-file release-notes.md
             echo "已创建 Release $REL_TAG"
           fi

@@ -1,6 +1,6 @@
 {
   "appId": "com.simplejuzi.pushup",
-  "appName": "PUSHUP Lite",
+  "appName": "PUSHUP",
   "webDir": "www",
   "server": {
     "androidScheme": "https",
