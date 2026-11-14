@@ -1,14 +1,14 @@
 {
-  "version": "1.38",
-  "tag": "v1.38",
-  "apk": "PUSHUP-v1.38.apk",
-  "apkUrl": "https://github.com/simplejuzi/PUSHUP/releases/download/v1.38/PUSHUP-v1.38.apk",
+  "version": "1.39",
+  "tag": "v1.39",
+  "apk": "PUSHUP-v1.39.apk",
+  "apkUrl": "https://github.com/simplejuzi/PUSHUP/releases/download/v1.39/PUSHUP-v1.39.apk",
   "changelog": [
-    "新增 4 套配色：樱粉、青碧、绯红、石墨，设置里可随时切换",
+    "新增排行榜：总榜 / 月榜 / 周榜，都按训练天数排，还能看自己的名次",
     "新增每日目标：记录页显示今天完成了多少、还差多少",
     "动作可以按组记：3 组 × 20，总数自动算，也能随时改回总数",
     "周报可以一键发到动态，朋友能直接看到这周练了多少",
-    "找朋友新增本周榜：周一到现在谁练得最多",
+    "找朋友页能看到每个人的训练天数和动态数，点一下进 TA 的主页",
     "每日提醒变聪明了：当天练过不打扰，断练几天会提醒你回来",
     "成就改成独立页面，别人的主页也能看 TA 的成就",
     "一天的记录可以清空：数量改到 0 再保存，就当作这天没有训练"

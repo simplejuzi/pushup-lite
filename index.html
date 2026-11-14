@@ -1116,6 +1116,67 @@ body.dark .back-btn{box-shadow:none}
 .bgc-row.on .bgc-pct{color:var(--accent)}
 .bgc-pct em{display:block;font-style:normal;font-size:10px;font-weight:500;color:var(--sub2);margin-top:2px}
 </style>
+<style id="v139-rank">
+/* ============ v1.39：排行榜（总榜 / 月榜 / 周榜，按训练天数） ============ */
+.feed-acts{display:flex;align-items:center;gap:8px;flex:none;align-self:center}
+.icon-btn{width:36px;height:36px;border-radius:12px;border:1px solid rgba(var(--accent-rgb),.28);background:var(--accent-soft);
+  font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;color:var(--accent);
+  -webkit-tap-highlight-color:transparent;transition:transform .12s,background .15s}
+.icon-btn:active{transform:scale(.94);background:var(--soft)}
+.rk-seg{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;background:var(--card);
+  border:1px solid var(--line);border-radius:15px;padding:4px;margin-top:14px}
+.rk-seg button{border:0;background:transparent;color:var(--sub);font:inherit;font-size:12.5px;font-weight:750;
+  padding:9px 0;border-radius:11px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:.15s}
+.rk-seg button.on{background:var(--accent);color:#fff}
+body.dark .rk-seg button.on{color:#14161C}
+.rk-mine{display:flex;align-items:center;gap:12px;background:var(--accent-soft);border:1px solid rgba(var(--accent-rgb),.2);
+  border-radius:18px;padding:14px 15px;margin-top:12px}
+.rk-mine-no{display:flex;align-items:baseline;gap:2px;flex:none;min-width:46px}
+.rk-mine-no b{font-size:23px;font-weight:800;color:var(--accent);letter-spacing:-.5px}
+.rk-mine-no i{font-style:normal;font-size:11px;color:var(--sub);font-weight:600}
+.rk-mine-t{flex:1;min-width:0}
+.rk-mine-t b{display:block;font-size:13px;font-weight:750;color:var(--ink)}
+.rk-mine-t small{display:block;font-size:11px;color:var(--sub2);margin-top:3px}
+.rk-mine-v{flex:none;font-size:16px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums}
+.rk-mine-v i{font-style:normal;font-size:10.5px;font-weight:600;color:var(--sub);margin-left:2px}
+.rk-list{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);
+  overflow:hidden;margin-top:12px}
+.rk-row{display:flex;align-items:center;gap:11px;padding:12px 14px;border-bottom:1px solid var(--line);cursor:pointer}
+.rk-row:last-child{border-bottom:0}
+.rk-row:active{background:var(--soft)}
+.rk-row.me{background:var(--accent-soft)}
+.rk-no{flex:none;width:24px;text-align:center;font-size:13px;font-weight:800;color:var(--sub2);
+  font-variant-numeric:tabular-nums}
+.rk-row.top .rk-no{font-size:15px;color:var(--accent)}
+.rk-av{flex:none;width:38px;height:38px;border-radius:50%;background:var(--soft);border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;font-size:19px}
+.rk-row.me .rk-av{background:var(--card)}
+.rk-nm{flex:1;min-width:0}
+.rk-nm b{display:block;font-size:13.5px;font-weight:700;color:var(--ink);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rk-nm small{display:block;font-size:10.5px;color:var(--sub2);margin-top:3px}
+.rk-v{flex:none;font-size:15px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums}
+.rk-v i{font-style:normal;font-size:10px;font-weight:600;color:var(--sub2);margin-left:2px}
+.rk-empty{background:var(--card);border:1px dashed var(--line);border-radius:18px;padding:26px 18px;
+  text-align:center;color:var(--sub2);font-size:12.5px;margin-top:12px;line-height:1.75}
+.rk-note{font-size:11px;color:var(--sub2);line-height:1.7;margin:12px 3px 0}
+.rank-entry{display:flex;align-items:center;gap:11px;background:var(--accent-soft);border:1px solid rgba(var(--accent-rgb),.18);
+  border-radius:16px;padding:12px 14px;margin:12px 0 4px;cursor:pointer}
+.rank-entry:active{transform:scale(.995)}
+.rk-entry-ic{flex:none;width:32px;height:32px;border-radius:50%;background:var(--card);display:flex;
+  align-items:center;justify-content:center;font-size:16px}
+.rk-entry-t{flex:1;min-width:0}
+.rk-entry-t b{display:block;font-size:13px;font-weight:750;color:var(--ink)}
+.rk-entry-t small{display:block;font-size:10.5px;color:var(--sub2);margin-top:2px}
+.rk-entry-go{flex:none;font-size:11.5px;font-weight:750;color:var(--accent);display:flex;align-items:center;gap:1px}
+
+/* v1.39：动态详情改成单一滚动区 —— 正文不再被 46% 高度切一半，评论跟着一起滚 */
+#page-post .pd-body{flex:1;min-height:0;overflow-y:auto;scrollbar-width:none;
+  padding-bottom:calc(4px + env(safe-area-inset-bottom))}
+#page-post .pd-body::-webkit-scrollbar{display:none}
+#page-post .pd-head{flex:none;max-height:none;overflow:visible}
+#page-post .pd-scroll{flex:none;min-height:0;overflow:visible;padding-bottom:22px}
+</style>
 <style id="v138-goal-sets">
 /* v1.38：每日目标 + 按组记录 */
 .goal-card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);
@@ -1360,9 +1421,12 @@ body.dark .back-btn{box-shadow:none}
         <div class="feed-head">
           <div class="head-row" style="margin-top:4px">
             <div><div class="eyebrow">COMMUNITY</div><h1 class="title">动态</h1></div>
-            <button class="find-btn" onclick="openFriends('feed')" aria-label="找朋友">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><path d="M16 5.4a3 3 0 0 1 0 5.6"/><path d="M17.4 14.1c2.1.5 3.6 2.3 3.6 4.9"/></svg>找朋友
-            </button>
+            <div class="feed-acts">
+              <button class="icon-btn" onclick="openRank('feed')" aria-label="排行榜" title="排行榜">🏆</button>
+              <button class="find-btn" onclick="openFriends('feed')" aria-label="找朋友">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><path d="M16 5.4a3 3 0 0 1 0 5.6"/><path d="M17.4 14.1c2.1.5 3.6 2.3 3.6 4.9"/></svg>找朋友
+              </button>
+            </div>
           </div>
           <div class="netbar hide">
             <span class="nb-ic">⚠️</span>
@@ -1386,10 +1450,12 @@ body.dark .back-btn{box-shadow:none}
           <button class="back-btn" onclick="closePostDetail()" aria-label="返回"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
           <div class="pd-top-name">动态详情</div>
         </div>
-        <div id="pdHead" class="pd-head"></div>
-        <div id="pdComments" class="pd-scroll"></div>
-        <!-- v1.28：评论输入条改为详情页 flex 列的一部分（正常流），
-             评论区 flex:1 自动精确填满到输入框上沿，自适应任意屏幕尺寸 -->
+        <!-- v1.39：正文与评论合并成一个滚动区，避免正文限高把卡片切一半 -->
+        <div class="pd-body" id="pdBody">
+          <div id="pdHead" class="pd-head"></div>
+          <div id="pdComments" class="pd-scroll"></div>
+        </div>
+        <!-- 评论输入条仍是 flex 列的一部分（正常流），固定在滚动区下方 -->
         <div class="pd-bar" id="pdBar" hidden></div>
       </div>
 
@@ -1405,7 +1471,11 @@ body.dark .back-btn{box-shadow:none}
           <div class="eyebrow">COMMUNITY</div>
           <h1 class="title" style="margin-top:6px">一起练的人</h1>
           <div class="fr-sub" id="friendsSub">正在加载…</div>
-          <div id="friendsRank"></div>
+          <div class="rank-entry" onclick="openRank('friends')">
+            <span class="rk-entry-ic">🏆</span>
+            <span class="rk-entry-t"><b>排行榜</b><small>总榜 · 月榜 · 周榜</small></span>
+            <span class="rk-entry-go">去看看<span class="ar">›</span></span>
+          </div>
           <div id="friendsList"></div>
           <div style="height:70px"></div>
         </div>
@@ -1492,6 +1562,7 @@ body.dark .back-btn{box-shadow:none}
 
         <div class="sec-title">快捷入口</div>
         <div class="settings">
+          <div class="sitem" onclick="openRank('profile')">排行榜<span class="r">总榜 / 月榜 / 周榜 <span class="ar">›</span></span></div>
           <div class="sitem" onclick="openFriends('profile')">找朋友<span class="r">看看大家练了几天 <span class="ar">›</span></span></div>
           <div class="sitem" onclick="openMyPosts()">我的动态<span class="r">只看自己发的 <span class="ar">›</span></span></div>
           <div class="sitem" onclick="switchTab('settings')">设置<span class="r">外观 / 配色 / 数据 / 关于 <span class="ar">›</span></span></div>
@@ -1517,6 +1588,26 @@ body.dark .back-btn{box-shadow:none}
         <div style="height:90px"></div>
       </div>
 
+      <!-- ===== v1.39：排行榜（独立页面，总榜 / 月榜 / 周榜都按训练天数） ===== -->
+      <div class="page" id="page-rank">
+        <div class="bg-top">
+          <button class="bg-back" onclick="closeRank()" aria-label="返回"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+        </div>
+        <div class="head-row" style="margin-top:6px">
+          <div><div class="eyebrow" id="rankEyebrow">LEADERBOARD</div><h1 class="title">排行榜</h1></div>
+          <div class="badge" id="rankBadge">— 人</div>
+        </div>
+        <div class="rk-seg" id="rkSeg">
+          <button class="on" data-k="all" onclick="setRankTab('all')">总榜</button>
+          <button data-k="month" onclick="setRankTab('month')">月榜</button>
+          <button data-k="week" onclick="setRankTab('week')">周榜</button>
+        </div>
+        <div id="rkMine"></div>
+        <div id="rkList"></div>
+        <div class="rk-note" id="rkNote"></div>
+        <div style="height:90px"></div>
+      </div>
+
       <!-- ===== 训练记录（简洁列表，自己和其他人的都能看，对所有人公开） ===== -->
       <div class="page" id="page-recs">
         <div class="head-row" style="margin-top:4px">
@@ -1532,7 +1623,7 @@ body.dark .back-btn{box-shadow:none}
       <div class="page" id="page-settings">
         <div class="head-row" style="margin-top:4px">
           <div><div class="eyebrow">SETTINGS</div><h1 class="title">设置</h1></div>
-          <div class="badge" id="profileVersion">v1.38</div>
+          <div class="badge" id="profileVersion">v1.39</div>
         </div>
 
         <div class="sec-title">外观</div>
@@ -1574,7 +1665,7 @@ body.dark .back-btn{box-shadow:none}
         <div class="about">
           <div class="app-ic"><img src="icons/icon-512.png" alt="PUSHUP"></div>
           <div class="app-nm">PUSHUP</div>
-          <div class="app-vr" id="aboutVersion" onclick="aboutVersionTap()">v1.38 · 正式版</div>
+          <div class="app-vr" id="aboutVersion" onclick="aboutVersionTap()">v1.39 · 正式版</div>
           <div class="app-ds">
             <div class="ds-lead">以俯卧撑为核心的自重训练记录工具。不用器械、不占地方，每天几十秒就能记完。</div>
             <div class="ds-h">记录</div>
@@ -1584,7 +1675,7 @@ body.dark .back-btn{box-shadow:none}
             <div class="ds-h">动作库</div>
             <div>内置多类自重动作，支持中英文搜索、难度筛选和收藏常用，也能自己新增动作与分类，记录时直接搜名字添加。</div>
             <div class="ds-h">坚持下去</div>
-            <div>记录页可以设一个每日目标，做完看得到今天还差多少；一个动作能按组填（3 组 × 20），总数自动算，只记总数也一样用。每日提醒到点在本机提醒你，当天练过就不会再打扰，断练几天会换个说法叫你回来，全程不联网也不耗流量。数据页的「周报」把本周天数、个数和上周对比放在一张卡片上，可以存成图片，也可以直接发到动态；练到一定天数、连续天数或累计个数，会解锁对应的成就徽章，别人的主页也能看 TA 的成就。找朋友里还有本周榜，看看这段时间谁练得最多。</div>
+            <div>记录页可以设一个每日目标，做完看得到今天还差多少；一个动作能按组填（3 组 × 20），总数自动算，只记总数也一样用。每日提醒到点在本机提醒你，当天练过就不会再打扰，断练几天会换个说法叫你回来，全程不联网也不耗流量。数据页的「周报」把本周天数、个数和上周对比放在一张卡片上，可以存成图片，也可以直接发到动态；练到一定天数、连续天数或累计个数，会解锁对应的成就徽章，别人的主页也能看 TA 的成就。排行榜单独一页，总榜按累计训练天数排，另外还有月榜和周榜，能看到自己的名次。</div>
             <div class="ds-h">和朋友一起</div>
             <div>动态里可以发文字、附上当天的训练成果，也能点赞和评论；找朋友能看到大家的训练天数与动态，点头像进主页看公开的训练记录。</div>
             <div class="ds-h">数据归你</div>
@@ -1760,7 +1851,7 @@ body.dark .back-btn{box-shadow:none}
     <!-- v1.5：应用内更新日志 -->
     <div class="modal" id="logModal">
       <div class="sheet scroll-sheet">
-        <div class="ins-head"><b>更新日志 <span class="log-v" id="logVer">v1.38</span></b>
+        <div class="ins-head"><b>更新日志 <span class="log-v" id="logVer">v1.39</span></b>
           <button class="tx" onclick="closeChangelog()">✕</button></div>
         <ul class="log-list" id="logList"></ul>
         <div class="sh-note">更新不会清除训练记录和账号内容。</div>
@@ -2039,14 +2130,14 @@ const lvCls={"入门":"b","进阶":"i","高阶":"a"};
 const isTime=u=>u==="秒";
 
 /* ============ v1.1：版本、主题、更新 ============ */
-const APP_VERSION="v1.38";
+const APP_VERSION="v1.39";
 /* 应用内更新日志：与 version.json 的 changelog 完全一致 */
 const APP_CHANGELOG=[
-  "新增 4 套配色：樱粉、青碧、绯红、石墨，设置里可随时切换",
+  "新增排行榜：总榜 / 月榜 / 周榜，都按训练天数排，还能看自己的名次",
   "新增每日目标：记录页显示今天完成了多少、还差多少",
   "动作可以按组记：3 组 × 20，总数自动算，也能随时改回总数",
   "周报可以一键发到动态，朋友能直接看到这周练了多少",
-  "找朋友新增本周榜：周一到现在谁练得最多",
+  "找朋友页能看到每个人的训练天数和动态数，点一下进 TA 的主页",
   "每日提醒变聪明了：当天练过不打扰，断练几天会提醒你回来",
   "成就改成独立页面，别人的主页也能看 TA 的成就",
   "一天的记录可以清空：数量改到 0 再保存，就当作这天没有训练"
@@ -2276,7 +2367,7 @@ function switchTab(name,fromTabBar){
   document.getElementById("page-"+name).classList.add("on");
   const _tb=document.getElementById("tab-"+name);
   if(_tb)_tb.classList.add("on");
-  else{const _p=(name==="badges")?((SUB_PARENT.badges==="user")?(SUB_PARENT.user||"feed"):"profile"):((name==="settings"||name==="myposts"||name==="recs")?"profile":(name==="library"?"record":(name==="friends"?(SUB_PARENT.friends==="profile"?"profile":"feed"):"feed")));
+  else{const _p=tabOwner(name);
        const _pe=document.getElementById("tab-"+_p);if(_pe)_pe.classList.add("on");}
   document.getElementById("libFoot").classList.toggle("hide",!(name==="library"&&libDirty));
   if(name==="record")refreshFab();else setFabVisible(false);   /* v1.7：只在记录页 + 有改动时出现 */
@@ -2316,7 +2407,14 @@ function renderAll(){fillRecord();renderStats();renderHistory();renderLibrary();
    Native（MainActivity.onBackPressed）会调 window.__pushupBack()：
    返回 true  = 网页自己处理了（关弹窗 / 回上一级），别退出 App
    返回 false = 已经在记录首页，允许退出（退出前做了「再按一次」防误触） */
-const SUB_PARENT={library:"record",myposts:"profile",user:"feed",settings:"profile",recs:"profile",post:"feed",friends:"feed",badges:"profile"};
+const SUB_PARENT={library:"record",myposts:"profile",user:"feed",settings:"profile",recs:"profile",post:"feed",friends:"feed",badges:"profile",rank:"feed"};
+/* v1.39：二级页 → 底栏 tab 的归属（沿父链往上找，避免嵌套跳转后高亮错位） */
+function tabOwner(name){
+  const TABS={record:1,data:1,history:1,feed:1,profile:1};
+  let cur=name,n=0;
+  while(!TABS[cur]&&n++<10){cur=SUB_PARENT[cur]||"feed";}
+  return TABS[cur]?cur:"feed";
+}
 const BACK_MODALS=[
   ["emojiPanel",function(){const m=document.getElementById("emojiPanel");if(m)m.classList.remove("on");}],
   ["breakModal",closeBreakthrough],
@@ -3197,19 +3295,22 @@ function openFriends(from){
       if(pg&&pg.classList.contains("on"))renderFriends();
     });
   }
-  loadFriendsStats().then(function(){
+  loadFriendsStats(FRIENDS_STATS&&Object.keys(FRIENDS_STATS).length?false:true).then(function(){
     const pg=document.getElementById("page-friends");
     if(pg&&pg.classList.contains("on"))renderFriends();
   });
 }
 function closeFriends(){switchTab(SUB_PARENT.friends||FRIENDS_BACK||"feed");}
 /* 一次批量取所有人的 (uid,d)，会话内缓存：不加轮询、不按人逐个请求 */
+let _friendsPromise=null;
 function loadFriendsStats(force){
   if(FRIENDS_STATS&&!force)return Promise.resolve(FRIENDS_STATS);
-  if(_friendsLoading)return Promise.resolve(FRIENDS_STATS||{});
+  /* v1.39：在途请求复用同一个 Promise —— 以前这里直接返回空对象，
+     导致「找朋友 / 排行榜」几乎同时打开时，后打开的那个永远显示 0 人 */
+  if(_friendsPromise)return _friendsPromise;
   if(!CLOUD())return Promise.resolve(FRIENDS_STATS={});
   _friendsLoading=true;
-  return sbFetch("/rest/v1/records?select=uid,d").then(function(rows){
+  _friendsPromise=sbFetch("/rest/v1/records?select=uid,d").then(function(rows){
     const m={};
     if(Array.isArray(rows))rows.forEach(function(x){
       if(!x||!x.uid||!x.d)return;
@@ -3219,47 +3320,126 @@ function loadFriendsStats(force){
     const me=sMe();
     if(me){const self={};DATA.filter(hasWorkout).forEach(function(r){self[r.d]=1;});m[me.id]=self;}
     FRIENDS_STATS=m;_friendsLoading=false;return m;
-  }).catch(function(){_friendsLoading=false;FRIENDS_STATS={};return {};});
+  }).catch(function(){_friendsLoading=false;FRIENDS_STATS=null;return {};});   /* 失败不缓存空结果，下次还能重试 */
+  _friendsPromise.then(function(){_friendsPromise=null;});
+  return _friendsPromise;
 }
 function friendDays(uid){
   if(FRIENDS_STATS)return FRIENDS_STATS[uid]?Object.keys(FRIENDS_STATS[uid]).length:0;
   return 0;   /* v1.32：不再拿本机缓存冒充云端训练天数（云端 records 为空时应显示 0） */
 }
-/* v1.38：本周榜（周一到现在练了几天）。数据复用 loadFriendsStats 一次批量拉到的 (uid,d)，不额外请求 */
-function renderFriendsRank(){
-  const box=document.getElementById("friendsRank");if(!box)return;
-  const s=sLoad(),me=sMe();
-  if(!me||!FRIENDS_STATS||!Object.keys(FRIENDS_STATS).length){box.innerHTML="";return;}
-  const mon=weekDates(0)[0],today=todayStr();
-  const rows=[],seen={};
+/* ============ v1.39：排行榜（独立页面） ============
+   三个榜都按「训练天数」排：总榜 = 累计训练过多少天（不是连续天数），
+   月榜 = 本月、周榜 = 本周（周一起），每天最多算 1 天。
+   数据复用 loadFriendsStats 一次批量拉到的 (uid → {日期:1})，不额外请求、不轮询。 */
+let RK_TAB="all",RK_BACK="feed";
+const RK_LABEL={all:"总榜",month:"月榜",week:"周榜"};
+function openRank(from){
+  const cur=(typeof currentPageName==="function")?currentPageName():"feed";
+  let back=(from&&from!=="rank")?from:cur;
+  if(!back||back==="rank")back="feed";
+  RK_BACK=back;
+  SUB_PARENT.rank=back;
+  renderRank();
+  switchTab("rank");
+  /* 还没拿到别人的数据时强制重试一次（失败不缓存，见 loadFriendsStats） */
+  loadFriendsStats(!FRIENDS_STATS||!Object.keys(FRIENDS_STATS).length).then(function(){
+    const pg=document.getElementById("page-rank");
+    if(pg&&pg.classList.contains("on"))renderRank();
+  });
+}
+function closeRank(){switchTab(SUB_PARENT.rank||RK_BACK||"feed");}
+function setRankTab(k){RK_TAB=(k==="month"||k==="week")?k:"all";renderRank();}
+/* 连续天数：从最近一次训练往前数，今天还没练也不会把连击清零 */
+function rankStreak(dates){
+  const set={};(dates||[]).forEach(function(d){if(d)set[d]=1;});
+  const ks=Object.keys(set).sort();
+  if(!ks.length)return 0;
+  const d=parseD(ks[ks.length-1]);
+  let n=0,guard=0;
+  while(set[ymdOf(d)]&&guard++<4000){n++;d.setDate(d.getDate()-1);}
+  return n;
+}
+function rankRange(k){
+  const t=todayStr();
+  if(k==="week")return {from:weekDates(0)[0],to:t};
+  if(k==="month")return {from:t.slice(0,8)+"01",to:t};
+  return null;
+}
+function rankRows(k){
+  const s=sLoad(),me=sMe(),src=FRIENDS_STATS||{},rng=rankRange(k);
+  const sets={};Object.keys(src).forEach(function(uid){sets[uid]=src[uid];});
+  const meta={};
   (s.users||[]).forEach(function(u){
-    if(!u||!u.id)return;seen[u.id]=1;
-    rows.push({id:u.id,name:u.name||"训练伙伴",emoji:u.emoji||u.avatar||"💪"});
+    if(u&&u.id)meta[u.id]={name:u.name||"训练伙伴",emoji:u.emoji||u.avatar||"💪"};
   });
-  if(!seen[me.id])rows.push({id:me.id,name:NICKNAME||"我",emoji:AVATAR||"💪"});
-  rows.forEach(function(r){
-    const set=FRIENDS_STATS[r.id]||{};
-    let wk=0,all=0;
-    Object.keys(set).forEach(function(d){all++;if(d>=mon&&d<=today)wk++;});
-    r.wk=wk;r.all=all;r.me=(r.id===me.id);
+  if(me){
+    if(!meta[me.id])meta[me.id]={name:NICKNAME||"我",emoji:AVATAR||"💪"};
+    /* 自己以本机记录为准：云端同步可能有延迟，不该让自己榜上数字偏少 */
+    const self={};DATA.filter(hasWorkout).forEach(function(r){self[r.d]=1;});
+    sets[me.id]=self;
+  }
+  return Object.keys(sets).map(function(uid){
+    /* 只算今天及以前：设备时间被改到未来产生的日期不该进榜 */
+    const t=todayStr(),ds=Object.keys(sets[uid]||{}).filter(function(d){return d&&d<=t;});
+    let cnt=0;
+    ds.forEach(function(d){if(!rng||(d>=rng.from&&d<=rng.to))cnt++;});
+    const info=meta[uid]||{name:"训练伙伴",emoji:"💪"};
+    return {id:uid,name:info.name,emoji:info.emoji,days:cnt,all:ds.length,
+            streak:rankStreak(ds),me:!!(me&&uid===me.id)};
+  }).filter(function(r){return r.all>0;})     /* 一次都没练过的账号不进榜 */
+    .sort(function(a,b){return b.days-a.days||b.streak-a.streak||b.all-a.all;});
+}
+function renderRank(){
+  const listEl=document.getElementById("rkList"),mineEl=document.getElementById("rkMine");
+  if(!listEl)return;
+  document.querySelectorAll("#rkSeg button").forEach(function(b){
+    b.classList.toggle("on",b.getAttribute("data-k")===RK_TAB);
   });
-  rows.sort(function(a,b){return b.wk-a.wk||b.all-a.all;});
-  const top=rows.filter(function(r){return r.wk>0;}).slice(0,5);
-  const myIdx=rows.findIndex(function(r){return r.me;});
-  if(myIdx>=5&&rows[myIdx].wk>0)top.push(rows[myIdx]);
-  if(!top.length){box.innerHTML="";return;}
-  box.innerHTML='<div class="rank-card"><div class="rank-hd"><b>本周榜</b><span>周一到现在 · 练了几天</span></div>'+
-    top.map(function(r){
-      const no=rows.indexOf(r)+1,cls="rank-row"+(r.me?" me":"")+(no===1?" top1":"")+(no===2?" top2":"")+(no===3?" top3":"");
-      return '<div class="'+cls+'" onclick="openUserProfile(\''+sEsc(r.id)+'\')">'+
-        '<div class="rank-no">'+(no<=3?"①②③".charAt(no-1):no)+'</div>'+
-        '<div class="rank-av">'+sEsc(r.emoji)+'</div>'+
-        '<div class="rank-nm">'+sEsc(r.name)+((r.me&&r.name!=="我")?"（我）":"")+'</div>'+
-        '<div class="rank-v">'+r.wk+'<i>天</i></div></div>';
-    }).join("")+'</div>';
+  const all=rankRows(RK_TAB);
+  const rows=all.filter(function(r){return r.days>0;});
+  const myRow=all.filter(function(r){return r.me;})[0];
+  const myIdx=myRow?rows.indexOf(myRow)+1:0;
+  const label=RK_LABEL[RK_TAB],rng=rankRange(RK_TAB);
+  const badge=document.getElementById("rankBadge");
+  if(badge)badge.textContent=rows.length+" 人";
+  const note=document.getElementById("rkNote");
+  if(note){
+    note.textContent=(RK_TAB==="all")
+      ?"总榜按累计训练天数排，不是连续天数。一次都没记录过的账号不进榜。"
+      :((RK_TAB==="month")
+        ?("月榜按 "+rng.from.slice(0,7)+" 这个月练了几天排，每天最多算 1 天。")
+        :("周榜按本周（"+rng.from.slice(5)+" 起）练了几天排，每天最多算 1 天。"));
+  }
+  if(mineEl){
+    if(myRow){
+      mineEl.innerHTML='<div class="rk-mine">'+
+        '<div class="rk-mine-no"><b>'+(myIdx>0?myIdx:"—")+'</b><i>'+(myIdx>0?("/ "+rows.length):"未上榜")+'</i></div>'+
+        '<div class="rk-mine-t"><b>我的'+label+'</b><small>'+
+          (myIdx>0?((RK_TAB==="all")?("连续 "+myRow.streak+" 天"):("累计 "+myRow.all+" 天")):"这段时间还没练，今天记一次就能上榜")+
+        '</small></div>'+
+        '<div class="rk-mine-v">'+myRow.days+'<i>天</i></div></div>';
+    }else mineEl.innerHTML="";
+  }
+  if(!rows.length){
+    listEl.innerHTML='<div class="rk-empty">这个时间段还没有人训练<br>'+
+      (RK_TAB==="all"?"记录一次就会出现在榜上":"换个榜单看看")+'</div>';
+    return;
+  }
+  listEl.innerHTML='<div class="rk-list">'+rows.map(function(r,i){
+    const no=i+1;
+    const sub=(RK_TAB==="all")
+      ?(r.streak>1?("连续 "+r.streak+" 天"):"刚开始记录")
+      :("累计 "+r.all+" 天");
+    const click=r.me?"":(" onclick=\"openUserProfile('"+sEsc(r.id)+"')\"");
+    return '<div class="rk-row'+(r.me?" me":"")+(no<=3?" top":"")+'"'+click+'>'+
+      '<div class="rk-no">'+(no<=3?"①②③".charAt(no-1):no)+'</div>'+
+      '<div class="rk-av">'+sEsc(r.emoji)+'</div>'+
+      '<div class="rk-nm"><b>'+sEsc(r.name)+(r.me&&r.name!=="我"?"（我）":"")+'</b><small>'+sub+'</small></div>'+
+      '<div class="rk-v">'+r.days+'<i>天</i></div></div>';
+  }).join("")+'</div>';
 }
 function renderFriends(){
-  renderFriendsRank();
   const box=document.getElementById("friendsList");if(!box)return;
   const s=sLoad(),me=sMe();
   const users=(s.users||[]).filter(function(u){return u&&u.id&&(!me||u.id!==me.id);});
@@ -5440,6 +5620,7 @@ function openPostDetail(pid,from){
   PD_ID=pid;
   renderPostDetail();
   switchTab("post");
+  const _pb=document.getElementById("pdBody");if(_pb)_pb.scrollTop=0;   /* v1.39：进详情从顶部开始 */
 }
 function closePostDetail(){hidePdBar();switchTab(PD_BACK||"feed");}
 function renderPostDetail(){
