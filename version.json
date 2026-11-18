@@ -1,8 +1,8 @@
 {
-  "version": "1.40",
-  "tag": "v1.40",
-  "apk": "PUSHUP-v1.40.apk",
-  "apkUrl": "https://github.com/simplejuzi/PUSHUP/releases/download/v1.40/PUSHUP-v1.40.apk",
+  "version": "1.41",
+  "tag": "v1.41",
+  "apk": "PUSHUP-v1.41.apk",
+  "apkUrl": "https://github.com/simplejuzi/PUSHUP/releases/download/v1.41/PUSHUP-v1.41.apk",
   "changelog": [
     "我的页训练概览改成训练天数 / 累计个数 / 连续天数",
     "排行榜并列天数给同名次，还能看距上一名还差几天",
@@ -12,6 +12,8 @@
     "每日目标完成后会显示连续达标天数",
     "我的动态与体重臂围空态加了引导，动作库分类可横滑",
     "清理了一批偏技术的提示文字",
-    "所有配色的按钮和统计卡文字统一改为白色，深色模式更清楚"
+    "所有配色的按钮和统计卡文字统一改为白色，深色模式更清楚",
+    "动态页新增消息提醒：谁赞了、评论了你的动态都能看到",
+    "消息支持全部已读，未读会显示在铃铛和底栏动态上"
   ]
 }

@@ -1280,6 +1280,37 @@ body.dark .back-btn{box-shadow:none}
 .rank-v{font-size:12px;font-weight:800;color:var(--accent-text);flex:none}
 .rank-v i{font-style:normal;font-size:10px;color:var(--sub);font-weight:600;margin-left:1px}
 </style>
+<style id="v141-notif">
+/* ============ v1.41：动态提醒（谁赞了 / 评论了我的动态） ============ */
+.notif-btn{position:relative}
+.nbadge{position:absolute;top:-5px;right:-5px;min-width:17px;height:17px;padding:0 4px;border-radius:999px;
+  background:#E5484D;color:#fff;font-size:10px;font-weight:800;font-style:normal;line-height:17px;display:none;
+  align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.25);pointer-events:none}
+.tab{position:relative}
+.tabdot{position:absolute;top:4px;left:calc(50% + 6px);width:7px;height:7px;border-radius:50%;
+  background:#E5484D;display:none;pointer-events:none}
+.notif-readall{margin-left:auto;min-height:32px;padding:6px 11px}
+.ntf-note{font-size:11px;color:var(--sub2);margin:2px 2px 0;line-height:1.6}
+.ntf-row{position:relative;display:flex;align-items:flex-start;gap:11px;background:var(--card);
+  border:1px solid var(--line);border-radius:16px;padding:13px 13px 13px 15px;margin-top:9px;
+  box-shadow:var(--shadow);cursor:pointer;transition:.15s}
+.ntf-row:active{background:var(--soft);transform:scale(.995)}
+.ntf-row.unread{background:var(--accent-soft);border-color:rgba(var(--accent-rgb),.22)}
+.ntf-row.unread::before{content:"";position:absolute;left:0;top:15px;bottom:15px;width:3px;border-radius:0 3px 3px 0;background:var(--accent)}
+.ntf-av{width:38px;height:38px;border-radius:50%;background:var(--soft);border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;font-size:19px;flex:none}
+.ntf-main{flex:1;min-width:0}
+.ntf-t{font-size:13px;color:var(--ink);font-weight:600;line-height:1.5}
+.ntf-t b{font-weight:800}
+.ntf-s{font-size:11.5px;color:var(--sub);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ntf-time{font-size:10.5px;color:var(--sub2);margin-top:5px}
+.ntf-ic{flex:none;font-size:15px;line-height:1;margin-top:4px;opacity:.9}
+.ntf-empty{text-align:center;padding:52px 18px 24px}
+.ntf-empty .ne-ic{width:64px;height:64px;border-radius:50%;background:var(--accent-soft);display:flex;
+  align-items:center;justify-content:center;font-size:28px;margin:0 auto 14px}
+.ntf-empty .ne-t{font-size:14.5px;font-weight:750;color:var(--ink)}
+.ntf-empty .ne-s{font-size:11.5px;color:var(--sub);margin:7px 0 16px;line-height:1.6}
+</style>
 </head>
 <body>
 <div class="stage">
@@ -1443,6 +1474,7 @@ body.dark .back-btn{box-shadow:none}
           <div class="head-row" style="margin-top:4px">
             <div><div class="eyebrow">COMMUNITY</div><h1 class="title">动态</h1></div>
             <div class="feed-acts">
+              <button class="icon-btn notif-btn" id="notifBtn" onclick="openNotif()" aria-label="消息" title="消息">🔔<i class="nbadge" id="notifDot">0</i></button>
               <button class="icon-btn" onclick="openRank('feed')" aria-label="排行榜" title="排行榜">🏆</button>
               <button class="find-btn" onclick="openFriends('feed')" aria-label="找朋友">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><path d="M16 5.4a3 3 0 0 1 0 5.6"/><path d="M17.4 14.1c2.1.5 3.6 2.3 3.6 4.9"/></svg>找朋友
@@ -1628,6 +1660,21 @@ body.dark .back-btn{box-shadow:none}
         <div style="height:90px"></div>
       </div>
 
+      <!-- ===== v1.41：动态提醒（谁赞了 / 评论了我的动态） ===== -->
+      <div class="page" id="page-notif">
+        <div class="bg-top">
+          <button class="bg-back" onclick="closeNotif()" aria-label="返回"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+          <button class="mini-btn notif-readall" id="notifReadAll" onclick="markNotifsRead()">全部已读</button>
+        </div>
+        <div class="head-row" style="margin-top:6px">
+          <div><div class="eyebrow">NOTIFICATIONS</div><h1 class="title">消息</h1></div>
+          <div class="badge" id="notifBadge">— 条</div>
+        </div>
+        <div class="ntf-note">有人点赞或评论你的动态时，会出现在这里</div>
+        <div id="notifList"></div>
+        <div style="height:90px"></div>
+      </div>
+
       <!-- ===== 训练记录（简洁列表，自己和其他人的都能看，对所有人公开） ===== -->
       <div class="page" id="page-recs">
         <div class="head-row" style="margin-top:4px">
@@ -1643,7 +1690,7 @@ body.dark .back-btn{box-shadow:none}
       <div class="page" id="page-settings">
         <div class="head-row" style="margin-top:4px">
           <div><div class="eyebrow">SETTINGS</div><h1 class="title">设置</h1></div>
-          <div class="badge" id="profileVersion">v1.40</div>
+          <div class="badge" id="profileVersion">v1.41</div>
         </div>
 
         <div class="sec-title">外观</div>
@@ -1724,7 +1771,7 @@ body.dark .back-btn{box-shadow:none}
       <button class="tab on" id="tab-record" onclick="switchTab('record',true)"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>记录</button>
       <button class="tab" id="tab-data" onclick="switchTab('data',true)"><svg viewBox="0 0 24 24"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>数据</button>
       <button class="tab" id="tab-history" onclick="switchTab('history',true)"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18"/></svg>历史</button>
-      <button class="tab" id="tab-feed" onclick="switchTab('feed',true)"><svg viewBox="0 0 24 24"><path d="M4 5h16v12H8l-4 3V5z"/><path d="M8 9h8M8 13h5"/></svg>动态</button>
+      <button class="tab" id="tab-feed" onclick="switchTab('feed',true)"><svg viewBox="0 0 24 24"><path d="M4 5h16v12H8l-4 3V5z"/><path d="M8 9h8M8 13h5"/></svg>动态<i class="tabdot" id="tabFeedDot"></i></button>
       <button class="tab" id="tab-profile" onclick="switchTab('profile',true)"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6"/></svg>我的</button>
     </div>
 
@@ -2150,7 +2197,7 @@ const lvCls={"入门":"b","进阶":"i","高阶":"a"};
 const isTime=u=>u==="秒";
 
 /* ============ v1.1：版本、主题、更新 ============ */
-const APP_VERSION="v1.40";
+const APP_VERSION="v1.41";
 /* 应用内更新日志：与 version.json 的 changelog 完全一致 */
 const APP_CHANGELOG=[
   "我的页训练概览改成训练天数 / 累计个数 / 连续天数",
@@ -2161,7 +2208,9 @@ const APP_CHANGELOG=[
   "每日目标完成后会显示连续达标天数",
   "我的动态与体重臂围空态加了引导，动作库分类可横滑",
   "清理了一批偏技术的提示文字",
-  "所有配色的按钮和统计卡文字统一改为白色，深色模式更清楚"
+  "所有配色的按钮和统计卡文字统一改为白色，深色模式更清楚",
+  "动态页新增消息提醒：谁赞了、评论了你的动态都能看到",
+  "消息支持全部已读，未读会显示在铃铛和底栏动态上"
 ];
 /* 过渡版 v1.29：这个包覆盖安装在原 PUSHUP App 上，包名是 com.simplejuzi.pushup。
    更新检查必须继续指向原仓库 simplejuzi/PUSHUP，否则收不到后续版本。
@@ -6976,6 +7025,206 @@ try{ checkBadges(false); }catch(e){}
 try{ syncRemindUI(); }catch(e){}
 try{ syncCopyLast(); }catch(e){}
 try{ renderGoal(); }catch(e){}
+</script>
+<script id="v141-notif-js">
+/* ============ v1.41：动态提醒 · 谁赞了 / 评论了我的动态 ============
+   只读本地已同步下来的 posts / likes / comments，不新增请求、不动云端结构；
+   已读线存在 localStorage（时间戳），老数据没有 ts 也能正常显示。 */
+(function(){
+  var SEEN_KEY="pushup_notif_seen_v1";
+  function store(){return (typeof sLoad==="function")?sLoad():null;}
+  function me(){return (typeof sMe==="function")?sMe():null;}
+  function esc(v){return (typeof sEsc==="function")?sEsc(v==null?"":String(v)):String(v==null?"":v);}
+  function ms(v){v=Number(v)||0;if(v>0&&v<1e12)v*=1000;return v;}
+  /* 已读状态：{ts: 已读线, keys: {事件key:1}}。v1.41 早期版本只存了 ts 数字，这里兼容。 */
+  function seenState(){
+    var st={ts:0,keys:{}};
+    try{
+      var raw=localStorage.getItem(SEEN_KEY);
+      if(!raw)return st;
+      if(/^\d+$/.test(raw)){st.ts=Number(raw)||0;return st;}
+      var d=JSON.parse(raw);
+      st.ts=Number(d&&d.ts)||0;
+      var ks=(d&&d.keys)||[];
+      for(var i=0;i<ks.length;i++)st.keys[ks[i]]=1;
+    }catch(e){}
+    return st;
+  }
+  function saveSeen(st){
+    try{
+      var keys=[];
+      for(var k in st.keys)if(st.keys[k])keys.push(k);
+      if(keys.length>3000)keys=keys.slice(keys.length-3000);
+      localStorage.setItem(SEEN_KEY,JSON.stringify({v:2,ts:Number(st.ts)||0,keys:keys}));
+    }catch(e){}
+  }
+  function isUnread(e,st){return !!(e&&e.ts>st.ts&&!st.keys[e.key]);}
+  function all(){
+    var S=store(),M=me();
+    if(!S||!M)return [];
+    var mine={};
+    (S.posts||[]).forEach(function(p){if(p&&p.uid===M.id)mine[p.id]=p;});
+    var out=[];
+    (S.likes||[]).forEach(function(l){
+      if(!l||!mine[l.a]||l.b===M.id)return;
+      out.push({k:"like",pid:l.a,uid:l.b,ts:ms(l.ts),key:"l:"+l.a+":"+l.b});
+    });
+    (S.comments||[]).forEach(function(c){
+      var pid=c&&(c.p||c.post_id);
+      if(!pid||!mine[pid]||c.uid===M.id)return;
+      out.push({k:"comment",pid:pid,uid:c.uid,ts:ms(c.ts),text:c.text||"",
+                key:"c:"+(c.id||(pid+"|"+c.uid+"|"+c.ts))});
+    });
+    out.sort(function(a,b){return b.ts-a.ts;});
+    var dup={},ret=[];
+    out.forEach(function(e){if(dup[e.key])return;dup[e.key]=1;ret.push(e);});
+    return ret;
+  }
+  function unread(){var st=seenState(),ev=all(),n=0;for(var i=0;i<ev.length;i++)if(isUnread(ev[i],st))n++;return n;}
+  function ago(ts){
+    if(!ts)return "较早";
+    var d=Date.now()-ts;if(d<0)d=0;
+    var m=Math.floor(d/60000);
+    if(m<1)return "刚刚";
+    if(m<60)return m+" 分钟前";
+    var h=Math.floor(m/60);
+    if(h<24)return h+" 小时前";
+    var dd=Math.floor(h/24);
+    if(dd<7)return dd+" 天前";
+    return (typeof sTime==="function")?sTime(ts):"";
+  }
+  function brief(pid){
+    var S=store();if(!S)return "";
+    var p=null;
+    for(var i=0;i<S.posts.length;i++)if(S.posts[i].id===pid){p=S.posts[i];break;}
+    if(!p)return "";
+    var t=String(p.text||"").replace(/\s+/g," ").trim();
+    if(!t&&p.workout)t="训练记录";
+    return t.length>26?t.slice(0,26)+"…":t;
+  }
+  function safe(v){return String(v==null?"":v).replace(/\\/g,"").replace(/'/g,"&#39;");}
+  function render(){
+    var list=document.getElementById("notifList");if(!list)return;
+    var M=me(),ev=all(),st=seenState(),un=0;
+    for(var i=0;i<ev.length;i++)if(isUnread(ev[i],st))un++;
+    var bd=document.getElementById("notifBadge");if(bd)bd.textContent=M?(ev.length+" 条"):"— 条";
+    var ra=document.getElementById("notifReadAll");if(ra)ra.style.display=(M&&un>0)?"":"none";
+    if(!M){
+      list.innerHTML='<div class="ntf-empty"><div class="ne-ic">🔔</div><div class="ne-t">登录后就能看到消息</div><div class="ne-s">谁赞了、评论了你的动态，都会出现在这里</div><button class="mini-btn" onclick="closeNotif();openAuth()">去登录</button></div>';
+      badge();
+      return;
+    }
+    if(!ev.length){
+      list.innerHTML='<div class="ntf-empty"><div class="ne-ic">💬</div><div class="ne-t">还没有新消息</div><div class="ne-s">发一条动态，等朋友来点赞或评论</div><button class="mini-btn" onclick="closeNotif();switchTab(\'feed\')">去动态看看</button></div>';
+      badge();
+      return;
+    }
+    var h="";
+    ev.forEach(function(e){
+      var u=(typeof sUser==="function")?sUser(e.uid):{name:"有人",emoji:"👤"};
+      var fresh=isUnread(e,st),b=brief(e.pid);
+      h+='<div class="ntf-row'+(fresh?" unread":"")+'" onclick="notifOpen(\''+safe(e.pid)+'\')">'+
+           '<div class="ntf-av">'+esc(u.emoji||"💪")+'</div>'+
+           '<div class="ntf-main">'+
+             '<div class="ntf-t"><b>'+esc(u.name)+'</b> '+(e.k==="like"?"赞了你的动态":"评论了你")+'</div>'+
+             (e.k==="comment"&&e.text?'<div class="ntf-s">“'+esc(e.text)+'”</div>':(b?'<div class="ntf-s">“'+esc(b)+'”</div>':''))+
+             '<div class="ntf-time">'+ago(e.ts)+'</div>'+
+           '</div>'+
+           '<div class="ntf-ic">'+(e.k==="like"?"👍":"💬")+'</div>'+
+         '</div>';
+    });
+    list.innerHTML=h;
+    badge();
+  }
+  function badge(){
+    var n=unread();
+    var dot=document.getElementById("notifDot");
+    if(dot){if(n>0){dot.textContent=n>99?"99+":String(n);dot.style.display="flex";}else{dot.textContent="0";dot.style.display="none";}}
+    var td=document.getElementById("tabFeedDot");
+    if(td)td.style.display=n>0?"block":"none";
+  }
+  /* 点进某条消息、或从动态流点进自己的动态 → 这条动态相关的提醒全部算已读 */
+  function markPostRead(pid){
+    if(!pid)return false;
+    var ev=all(),st=seenState(),hit=false;
+    for(var i=0;i<ev.length;i++){
+      if(ev[i].pid!==pid)continue;
+      if(isUnread(ev[i],st)){st.keys[ev[i].key]=1;hit=true;}
+    }
+    if(!hit)return false;
+    saveSeen(st);
+    var pg=document.getElementById("page-notif");
+    if(pg&&pg.classList.contains("on"))render();else badge();
+    return true;
+  }
+  window.notifEvents=all;
+  window.notifUnread=unread;
+  window.renderNotif=render;
+  window.updateNotifBadge=badge;
+  window.openNotif=function(){
+    try{
+      var from=(typeof currentPageName==="function")?currentPageName():"feed";
+      if(typeof SUB_PARENT!=="undefined"&&SUB_PARENT)SUB_PARENT.notif=(from&&from!=="notif")?from:"feed";
+    }catch(e){}
+    render();
+    if(typeof switchTab==="function")switchTab("notif");
+    badge();
+  };
+  window.closeNotif=function(){
+    var back="feed";
+    try{if(typeof SUB_PARENT!=="undefined"&&SUB_PARENT&&SUB_PARENT.notif)back=SUB_PARENT.notif;}catch(e){}
+    if(back==="notif")back="feed";
+    if(typeof switchTab==="function")switchTab(back);
+  };
+  window.notifOpen=function(pid){
+    if(!pid)return;
+    markPostRead(pid);
+    if(typeof openPostDetail==="function")openPostDetail(pid,"notif");
+  };
+  window.markNotifsRead=function(){
+    var ev=all();
+    if(!ev.length)return;
+    var st=seenState();
+    if(ev[0].ts>st.ts)st.ts=ev[0].ts;
+    st.keys={};
+    saveSeen(st);
+    render();badge();
+    if(typeof toast==="function")toast("已全部标为已读");
+  };
+  function hook(){
+    if(typeof window.switchTab==="function"&&!window.switchTab.__ntf){
+      var o=window.switchTab;
+      window.switchTab=function(name,from){
+        var r=o.apply(this,arguments);
+        try{if(name==="notif")render();badge();}catch(e){}
+        return r;
+      };
+      window.switchTab.__ntf=1;
+    }
+    if(typeof window.renderFeed==="function"&&!window.renderFeed.__ntf){
+      var rf=window.renderFeed;
+      window.renderFeed=function(){
+        var r=rf.apply(this,arguments);
+        try{badge();}catch(e){}
+        return r;
+      };
+      window.renderFeed.__ntf=1;
+    }
+    /* 从动态流 / 他人主页点进自己的动态详情，也算看过这条动态的提醒 */
+    if(typeof window.openPostDetail==="function"&&!window.openPostDetail.__ntf){
+      var opd=window.openPostDetail;
+      window.openPostDetail=function(pid,from){
+        var r=opd.apply(this,arguments);
+        try{markPostRead(pid);}catch(e){}
+        return r;
+      };
+      window.openPostDetail.__ntf=1;
+    }
+  }
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",function(){hook();badge();});
+  else{hook();badge();}
+  setTimeout(function(){hook();badge();},900);
+})();
 </script>
 </body>
 </html>
