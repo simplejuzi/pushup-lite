@@ -1,8 +1,8 @@
 {
-  "version": "1.42",
-  "tag": "v1.42",
-  "apk": "PUSHUP-v1.42.apk",
-  "apkUrl": "https://github.com/simplejuzi/PUSHUP/releases/download/v1.42/PUSHUP-v1.42.apk",
+  "version": "1.43",
+  "tag": "v1.43",
+  "apk": "PUSHUP-v1.43.apk",
+  "apkUrl": "https://github.com/simplejuzi/PUSHUP/releases/download/v1.43/PUSHUP-v1.43.apk",
   "changelog": [
     "我的页训练概览改成训练天数 / 累计个数 / 连续天数",
     "排行榜并列天数给同名次，还能看距上一名还差几天",
@@ -17,6 +17,8 @@
     "消息支持全部已读，未读会显示在铃铛和底栏动态上",
     "每日目标只统计俯卧撑，深蹲、引体等不再算入",
     "修好自定义动作重开 App 后消失的问题，本机与云端会合并保存",
-    "完成今日目标会掉一枚彩蛋，14 种普通 / 稀有 / 传说等你收"
+    "完成今日目标会掉一枚彩蛋，14 种普通 / 稀有 / 传说等你收",
+    "检测更新和下载改走自己的服务器，国内打开更快",
+    "检测更新会显示进度，网络不好时马上提示重试，不再没反应"
   ]
 }

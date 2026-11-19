@@ -1339,6 +1339,11 @@ body.dark .back-btn{box-shadow:none}
 .egg-dex{margin-top:13px;font-size:11px;color:var(--sub2);line-height:1.7}
 .egg-dex b{color:var(--ink);font-weight:760}
 </style>
+<style id="v143-upd">
+/* v1.43：检测更新过程中的状态 */
+#updItem.busy{pointer-events:none}
+#updItem.busy .r{opacity:.62}
+</style>
 </head>
 <body>
 <div class="stage">
@@ -1723,7 +1728,7 @@ body.dark .back-btn{box-shadow:none}
       <div class="page" id="page-settings">
         <div class="head-row" style="margin-top:4px">
           <div><div class="eyebrow">SETTINGS</div><h1 class="title">设置</h1></div>
-          <div class="badge" id="profileVersion">v1.42</div>
+          <div class="badge" id="profileVersion">v1.43</div>
         </div>
 
         <div class="sec-title">外观</div>
@@ -1757,7 +1762,7 @@ body.dark .back-btn{box-shadow:none}
 
         <div class="sec-title">软件更新<span>更新不会清除训练记录</span></div>
         <div class="settings">
-          <div class="sitem" onclick="checkUpdate(true)">检测更新<span class="r">检查是否有新版本 <span class="ar">›</span></span></div>
+          <div class="sitem" id="updItem" onclick="checkUpdate(true)">检测更新<span class="r" id="updItemR">检查是否有新版本 <span class="ar">›</span></span></div>
           <div class="sitem" onclick="openChangelog()">更新日志<span class="r">这次改了什么 <span class="ar">›</span></span></div>
         </div>
 
@@ -2246,7 +2251,7 @@ const lvCls={"入门":"b","进阶":"i","高阶":"a"};
 const isTime=u=>u==="秒";
 
 /* ============ v1.1：版本、主题、更新 ============ */
-const APP_VERSION="v1.42";
+const APP_VERSION="v1.43";
 /* 应用内更新日志：与 version.json 的 changelog 完全一致 */
 const APP_CHANGELOG=[
   "我的页训练概览改成训练天数 / 累计个数 / 连续天数",
@@ -2262,20 +2267,28 @@ const APP_CHANGELOG=[
   "消息支持全部已读，未读会显示在铃铛和底栏动态上",
   "每日目标只统计俯卧撑，深蹲、引体等不再算入",
   "修好自定义动作重开 App 后消失的问题，本机与云端会合并保存",
-  "完成今日目标会掉一枚彩蛋，14 种普通 / 稀有 / 传说等你收"
+  "完成今日目标会掉一枚彩蛋，14 种普通 / 稀有 / 传说等你收",
+  "检测更新和下载改走自己的服务器，国内打开更快",
+  "检测更新会显示进度，网络不好时马上提示重试，不再没反应"
 ];
 /* 过渡版 v1.29：这个包覆盖安装在原 PUSHUP App 上，包名是 com.simplejuzi.pushup。
    更新检查必须继续指向原仓库 simplejuzi/PUSHUP，否则收不到后续版本。
    以 Release 接口为准（原仓库 main 的 version.json 仍停在 v1.28），
    两个国内镜像只作备用；以后发新版只需在原仓库新建 Release。 */
+/* v1.43：版本检测与下载优先走自己的宝塔服务器（国内直连、下载快），GitHub 只做兜底 */
 const RELEASE_PAGE="https://github.com/simplejuzi/PUSHUP/releases/latest";
-/* APK 只允许来自原仓库的 Release：第三方镜像万一被篡改，也不至于指向别处 */
-const APK_URL_PREFIX="https://github.com/simplejuzi/PUSHUP/releases/";
-const UPDATE_ENDPOINTS=[
-  "https://api.github.com/repos/simplejuzi/PUSHUP/releases/latest",
-  "https://fastly.jsdelivr.net/gh/simplejuzi/PUSHUP@main/version.json",
-  "https://ghproxy.net/https://raw.githubusercontent.com/simplejuzi/PUSHUP/main/version.json"
+/* 只接受这两个来源的 APK 直链，别的地址一律不认（防止镜像被换包） */
+const APK_URL_PREFIXES=[
+  "http://154.12.36.171:27080/pushup/",
+  "https://github.com/simplejuzi/PUSHUP/releases/"
 ];
+const UPDATE_ENDPOINTS=[
+  "http://154.12.36.171:27080/pushup/version.json",
+  "https://api.github.com/repos/simplejuzi/PUSHUP/releases/latest",
+  "https://fastly.jsdelivr.net/gh/simplejuzi/PUSHUP@main/version.json"
+];
+const UPD_ITEM_MS=2800;     /* 单个源最多等 3.8 秒，超时立刻换下一个 */
+const UPD_TOTAL_MS=7500;    /* 整次检测最多 9.5 秒，绝不让界面一直没反应 */
 const PKEY="fitness_palette_v1";
 /* v1.34：MySQL 接口地址（不再是 Supabase / 反代） */
 function serverTagText(){
@@ -4477,30 +4490,67 @@ function verNewer(a,b){
   for(let i=0;i<3;i++){if(x[i]>y[i])return true;if(x[i]<y[i])return false;}
   return false;
 }
+/* 带硬超时的取 JSON：连接卡住、body 读一半都能按时返回，不会再「一直不动」 */
+function updFetchJson(u,ms){
+  return new Promise(function(resolve,reject){
+    var ctl=(typeof AbortController!=="undefined")?new AbortController():null;
+    var settled=false;
+    var timer=setTimeout(function(){
+      if(settled)return;settled=true;
+      try{if(ctl)ctl.abort();}catch(e){}
+      reject(new Error("timeout"));
+    },ms);
+    var opt={cache:"no-store",headers:{"Accept":"application/vnd.github+json, application/json"}};
+    if(ctl)opt.signal=ctl.signal;
+    fetch(u,opt).then(function(r){
+      if(!r.ok)throw new Error("http "+r.status);
+      return r.text();                     /* 先拿文本，避免 body 卡住 */
+    }).then(function(txt){
+      if(settled)return;settled=true;clearTimeout(timer);
+      try{resolve(JSON.parse(txt));}catch(e){reject(new Error("bad json"));}
+    }).catch(function(e){
+      if(settled)return;settled=true;clearTimeout(timer);
+      reject(e);
+    });
+  });
+}
+function apkUrlOk(u){
+  for(var i=0;i<APK_URL_PREFIXES.length;i++)if(u.indexOf(APK_URL_PREFIXES[i])===0)return true;
+  return false;
+}
 async function fetchLatest(){
-  for(const u of UPDATE_ENDPOINTS){
+  for(const base of UPDATE_ENDPOINTS){
+    const isApi=base.indexOf("api.github.com")>=0;
+    /* 服务器 / 镜像加时间戳，避免拿到缓存里的旧版本 */
+    const u=isApi?base:(base+(base.indexOf("?")>=0?"&":"?")+"t="+Date.now());
     try{
-      const ctl=(typeof AbortController!=="undefined")?new AbortController():null;
-      const timer=ctl?setTimeout(()=>ctl.abort(),6000):null;
-      const opt={cache:"no-store",headers:{"Accept":"application/vnd.github+json"}};
-      if(ctl)opt.signal=ctl.signal;
-      const r=await fetch(u,opt);
-      if(timer)clearTimeout(timer);
-      if(!r.ok)continue;
-      const j=await r.json();
-      if(u.indexOf("api.github.com")>=0){
+      const j=await updFetchJson(u,UPD_ITEM_MS);
+      if(isApi){
+        const tag=String(j.tag_name||"");
+        if(!tag)continue;
         const asset=(j.assets||[]).find(a=>/\.apk$/i.test(a.name||""));
-        return {version:j.tag_name||"",notes:j.body||"",url:asset?asset.browser_download_url:"",name:asset?asset.name:""};
+        return {version:tag,notes:j.body||"",url:asset?asset.browser_download_url:"",name:asset?asset.name:""};
       }
+      if(!j||!j.version)continue;
       const apkUrl=String(j.apkUrl||"");
-      if(apkUrl&&apkUrl.indexOf(APK_URL_PREFIX)!==0)continue;   // 镜像内容异常 → 换下一个源
-      return {version:"v"+(j.version||""),notes:(j.changelog||[]).map(x=>"· "+x).join("\n"),
+      if(apkUrl&&!apkUrlOk(apkUrl))continue;     /* 内容异常 → 换下一个源 */
+      return {version:"v"+j.version,notes:(j.changelog||[]).map(x=>"· "+x).join("\n"),
               url:apkUrl,name:j.apk||""};
-    }catch(e){ /* 超时 / 失败：完全静默，绝不弹网络错误 */ }
+    }catch(e){ /* 超时 / 失败 → 静默换下一个源 */ }
   }
   return null;
 }
-let _updBusy=false,_updListener=null;
+/* 上一次检测到的新版本，网络差时还能提示 */
+function updCacheGet(){
+  try{
+    const c=JSON.parse(localStorage.getItem("pushup_upd_cache_v1")||"null");
+    return (c&&c.info&&c.info.version)?c.info:null;
+  }catch(e){return null;}
+}
+function updCacheSave(info){
+  try{localStorage.setItem("pushup_upd_cache_v1",JSON.stringify({ts:Date.now(),info:info}));}catch(e){}
+}
+let _updBusy=false,_updListener=null,_updChecking=false;
 function fmtSize(n){
   n=Number(n)||0;
   return n>=1048576?(n/1048576).toFixed(1)+" MB":Math.max(1,Math.round(n/1024))+" KB";
@@ -4534,17 +4584,52 @@ function markUpdateDone(){
   if(sub&&sub.textContent==="正在连接…")sub.textContent="已完成";
 }
 async function checkUpdate(manual){
-  if(_updBusy)return;
-  const info=await fetchLatest();
-  if(!info||!info.version)return;                       // 没网 / 失败 → 零提示
+  if(_updBusy||_updChecking)return;
+  const item=document.getElementById("updItem"),tip=document.getElementById("updItemR");
+  const DEF="检查是否有新版本";
+  const say=function(t){if(tip)tip.innerHTML=t+' <span class="ar">›</span>';};
+  _updChecking=true;
+  if(manual){if(item)item.classList.add("busy");say("检测中…");}
+  let info=null;
+  try{
+    info=await Promise.race([
+      fetchLatest(),
+      new Promise(function(res){setTimeout(function(){res(null);},UPD_TOTAL_MS+1200);})
+    ]);
+  }catch(e){info=null;}
+  _updChecking=false;
+  if(item)item.classList.remove("busy");
+  let fromCache=false;
+  if(!info||!info.version){
+    const c=updCacheGet();
+    if(c&&verNewer(c.version,APP_VERSION)){info=c;fromCache=true;}
+  }
+  if(!info||!info.version){
+    if(manual){
+      say("没连上，点这里重试");
+      toast("没连上更新服务，请检查网络后重试");
+      setTimeout(function(){if(!_updChecking)say(DEF);},5000);
+    }
+    return;
+  }
+  updCacheSave(info);
   if(!verNewer(info.version,APP_VERSION)){
-    if(manual)toast("已是最新版本 "+APP_VERSION);
+    if(manual){
+      say("已是最新 "+APP_VERSION);
+      toast("已是最新版本 "+APP_VERSION);
+      setTimeout(function(){if(!_updChecking)say(DEF);},4000);
+    }
     return;
   }
   curUpdate=info;
+  say("有新版本 "+info.version);
   document.getElementById("updVer").textContent=info.version;
   document.getElementById("updLog").textContent=(info.notes||"有新版本可用").trim();
   resetUpdateUI();
+  if(fromCache){
+    const n=document.getElementById("updNote");
+    if(n)n.textContent="当前网络没连上更新服务，这是上次检测到的新版本。";
+  }
   document.getElementById("updBtn").textContent=info.url?"立即更新":"查看下载页";
   document.getElementById("updateModal").classList.add("on");
 }
