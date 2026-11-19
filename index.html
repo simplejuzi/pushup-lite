@@ -1311,6 +1311,34 @@ body.dark .back-btn{box-shadow:none}
 .ntf-empty .ne-t{font-size:14.5px;font-weight:750;color:var(--ink)}
 .ntf-empty .ne-s{font-size:11.5px;color:var(--sub);margin:7px 0 16px;line-height:1.6}
 </style>
+<style id="v142-egg">
+/* ============ v1.42：完成今日目标的彩蛋奖励 ============ */
+.goal-card.done{overflow:hidden}
+.goal-card.done .goal-fill{background:linear-gradient(90deg,var(--green),#7BE3A6,var(--green));
+  background-size:200% 100%;animation:eggFlow 2.8s linear 2}
+@keyframes eggFlow{0%{background-position:0 0}100%{background-position:200% 0}}
+.goal-card.pop{animation:eggPop .55s cubic-bezier(.2,1.5,.4,1)}
+@keyframes eggPop{0%{transform:scale(1)}34%{transform:scale(1.035)}68%{transform:scale(.995)}100%{transform:scale(1)}}
+.egg-chip{display:flex;align-items:center;gap:6px;margin-top:11px;padding-top:10px;
+  border-top:1px dashed var(--line);font-size:11.5px;color:var(--sub);cursor:pointer}
+.egg-chip.hide{display:none}
+.egg-chip .ec-e{font-size:14px;line-height:1}
+.egg-chip b{color:var(--ink);font-weight:760}
+.egg-chip .ec-more{margin-left:auto;color:var(--accent-text);font-weight:750}
+.egg-emoji{width:88px;height:88px;margin:0 auto 6px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:46px;line-height:1;position:relative;
+  background:radial-gradient(circle at 50% 42%,rgba(var(--accent-rgb),.20),rgba(var(--accent-rgb),.04));
+  border:1px solid rgba(var(--accent-rgb),.20);animation:celFloat 2.6s ease-in-out infinite}
+.egg-name{font-size:21px;font-weight:800;color:var(--ink);letter-spacing:-.3px;margin-top:4px}
+.egg-rar{display:inline-flex;align-items:center;gap:4px;margin-top:8px;padding:3px 10px;border-radius:999px;
+  border:1px solid transparent;font-size:10px;font-weight:800;letter-spacing:.5px}
+.egg-rar.c{background:var(--soft);color:var(--ink)}
+.egg-rar.r{background:var(--accent-soft);color:var(--accent-text);border-color:rgba(var(--accent-rgb),.22)}
+.egg-rar.l{background:linear-gradient(120deg,rgba(245,158,11,.32),rgba(245,158,11,.10));
+  color:var(--ink);border-color:rgba(245,158,11,.5)}
+.egg-dex{margin-top:13px;font-size:11px;color:var(--sub2);line-height:1.7}
+.egg-dex b{color:var(--ink);font-weight:760}
+</style>
 </head>
 <body>
 <div class="stage">
@@ -1339,6 +1367,11 @@ body.dark .back-btn{box-shadow:none}
           <div class="goal-top"><span class="goal-k">今日目标</span><span class="goal-n" id="goalNum">0 / 0</span></div>
           <div class="goal-track"><i class="goal-fill" id="goalFill"></i></div>
           <div class="goal-sub" id="goalSub">设一个目标，记录今天完成了多少</div>
+          <div class="egg-chip hide" id="eggChip" onclick="eggChipTap(event)">
+            <span class="ec-e" id="eggChipEmoji">🥚</span>
+            <span>今日彩蛋 · <b id="eggChipName">—</b></span>
+            <span class="ec-more">查看 ›</span>
+          </div>
         </div>
         <div class="datebar">
           <button class="navbtn" onclick="shiftDate(-1)">‹</button>
@@ -1690,7 +1723,7 @@ body.dark .back-btn{box-shadow:none}
       <div class="page" id="page-settings">
         <div class="head-row" style="margin-top:4px">
           <div><div class="eyebrow">SETTINGS</div><h1 class="title">设置</h1></div>
-          <div class="badge" id="profileVersion">v1.41</div>
+          <div class="badge" id="profileVersion">v1.42</div>
         </div>
 
         <div class="sec-title">外观</div>
@@ -1963,6 +1996,22 @@ body.dark .back-btn{box-shadow:none}
         <button class="cel-btn" onclick="closeBreakthrough()">继续加油 →</button>
       </div>
     </div>
+    <!-- v1.42：完成今日目标掉彩蛋 -->
+    <div class="modal celebrate" id="eggModal">
+      <div class="cel-mask" onclick="closeEgg()"></div>
+      <div class="cel-confetti" id="eggConfetti" aria-hidden="true"></div>
+      <div class="cel-card">
+        <div class="cel-halo"></div>
+        <div class="egg-emoji" id="eggEmoji">🥚</div>
+        <div class="cel-kicker">PUSHUP · 今日彩蛋</div>
+        <div class="egg-name" id="eggName">铁臂小将</div>
+        <div><span class="egg-rar c" id="eggRar">普通</span></div>
+        <div class="cel-word" id="eggWord">手臂已经开始记住这个动作了。</div>
+        <div class="egg-dex" id="eggDex">图鉴 1 / 14</div>
+        <button class="cel-btn" onclick="closeEgg()">收下彩蛋 →</button>
+      </div>
+    </div>
+
     <div class="modal" id="clearModal">
       <div class="sheet">
         <div class="sh-t">清空数据</div>
@@ -2051,7 +2100,7 @@ body.dark .back-btn{box-shadow:none}
     <div class="modal" id="goalModal" onclick="modalBackdropClose(event,'goalModal')">
       <div class="sheet">
         <div class="sh-t">每日目标</div>
-        <div class="sh-s">设一个每天想完成的个数，记录页会显示今天完成了多少、还差多少。设置随时能改，不影响已有记录。</div>
+        <div class="sh-s">只统计俯卧撑（标准、宽距、钻石等俯卧撑变式），深蹲、引体这些不计入。记录页会显示今天完成了多少、还差多少，设置随时能改。</div>
         <div class="goal-presets">
           <button data-v="50" onclick="pickGoal(50)">50</button>
           <button data-v="100" onclick="pickGoal(100)">100</button>
@@ -2197,7 +2246,7 @@ const lvCls={"入门":"b","进阶":"i","高阶":"a"};
 const isTime=u=>u==="秒";
 
 /* ============ v1.1：版本、主题、更新 ============ */
-const APP_VERSION="v1.41";
+const APP_VERSION="v1.42";
 /* 应用内更新日志：与 version.json 的 changelog 完全一致 */
 const APP_CHANGELOG=[
   "我的页训练概览改成训练天数 / 累计个数 / 连续天数",
@@ -2210,7 +2259,10 @@ const APP_CHANGELOG=[
   "清理了一批偏技术的提示文字",
   "所有配色的按钮和统计卡文字统一改为白色，深色模式更清楚",
   "动态页新增消息提醒：谁赞了、评论了你的动态都能看到",
-  "消息支持全部已读，未读会显示在铃铛和底栏动态上"
+  "消息支持全部已读，未读会显示在铃铛和底栏动态上",
+  "每日目标只统计俯卧撑，深蹲、引体等不再算入",
+  "修好自定义动作重开 App 后消失的问题，本机与云端会合并保存",
+  "完成今日目标会掉一枚彩蛋，14 种普通 / 稀有 / 传说等你收"
 ];
 /* 过渡版 v1.29：这个包覆盖安装在原 PUSHUP App 上，包名是 com.simplejuzi.pushup。
    更新检查必须继续指向原仓库 simplejuzi/PUSHUP，否则收不到后续版本。
@@ -3291,6 +3343,8 @@ function saveCustom(){
   CUSTOM.push(e);EX=BASE_EX.concat(CUSTOM);
   if(document.getElementById("cfFav").checked&&!FAVS.includes(e.id))FAVS.push(e.id);
   saveAll();closeCustom();renderAll();markLibChange();
+  /* v1.42：立刻推一次，别等 600ms 的延迟同步 —— 加完就退出也不会丢 */
+  try{pushSettings(true).catch(function(){});}catch(e){}
   toast("已添加「"+n+"」→ "+catOf(c).n);
 }
 let PENDING_DEL_CUSTOM="";
@@ -3305,7 +3359,10 @@ function closeDelCustom(){
 function confirmDelCustom(){
   const id=PENDING_DEL_CUSTOM;closeDelCustom();if(!id)return;
   CUSTOM=CUSTOM.filter(x=>x.id!==id);EX=BASE_EX.concat(CUSTOM);
-  FAVS=FAVS.filter(x=>x!==id);saveAll();renderAll();markLibChange();toast("已删除自定义动作");
+  FAVS=FAVS.filter(x=>x!==id);customTombAdd(id);
+  saveAll();renderAll();markLibChange();
+  try{pushSettings(true).catch(function(){});}catch(e){}
+  toast("已删除自定义动作");
 }
 
 /* ============ 我的页 ============ */
@@ -5980,6 +6037,26 @@ let TOMB=(function(){try{const o=JSON.parse(localStorage.getItem(TOMB_KEY)||"{}"
 function saveTomb(){try{localStorage.setItem(TOMB_KEY,JSON.stringify(TOMB));}catch(e){}}
 function tombAdd(d){TOMB[d]=Date.now();saveTomb();}
 function tombClear(d){if(TOMB[d]){delete TOMB[d];saveTomb();}}
+/* v1.42：自定义动作的删除墓碑。云端 settings 里可能还存着旧数组，
+   拉回来时先把已删动作排除，避免「删了又回来」；也避免刚加的动作被旧数组整块覆盖。 */
+const CUSTOM_TOMB_KEY="pushup_custom_tomb_v1";
+function customTombList(){
+  try{const a=JSON.parse(localStorage.getItem(CUSTOM_TOMB_KEY)||"[]");return Array.isArray(a)?a:[];}catch(e){return [];}
+}
+function customTombAdd(id){
+  if(!id)return;
+  const a=customTombList();
+  if(a.indexOf(id)<0)a.push(id);
+  try{localStorage.setItem(CUSTOM_TOMB_KEY,JSON.stringify(a.slice(-500)));}catch(e){}
+}
+/* 本机与云端按 id 合并：本机优先、云端补充，墓碑里的丢弃 */
+function mergeCustom(local,remote){
+  const dead={};customTombList().forEach(function(id){dead[id]=1;});
+  const out=[],seen={};
+  (Array.isArray(local)?local:[]).forEach(function(x){if(x&&x.id&&!dead[x.id]&&!seen[x.id]){seen[x.id]=1;out.push(x);}});
+  (Array.isArray(remote)?remote:[]).forEach(function(x){if(x&&x.id&&!dead[x.id]&&!seen[x.id]){seen[x.id]=1;out.push(x);}});
+  return out;
+}
 function syncEnabled(){
   if(!sMe())return false;
   if(typeof window!=="undefined"&&window.__PREVIEW_FAKE_SYNC__)return true;
@@ -6151,8 +6228,17 @@ function pullSettings(){
     .then(function(rows){
       if(!rows||!rows.length)return false;
       const x=rows[0];
+      let needPush=false;
       if(Array.isArray(x.favs)&&x.favs.length)FAVS=x.favs;
-      if(Array.isArray(x.custom)){CUSTOM=x.custom;normalizeUnits(CUSTOM);EX=BASE_EX.concat(CUSTOM);}
+      /* v1.42：不整块覆盖 —— 云端可能是旧数组，会把刚加的动作抹掉。
+         本机优先、云端补充，按 id 合并后再把本机独有的推上去。 */
+      if(Array.isArray(x.custom)){
+        const merged=mergeCustom(CUSTOM,x.custom);
+        if(JSON.stringify(merged)!==JSON.stringify(x.custom))needPush=true;
+        CUSTOM=merged;normalizeUnits(CUSTOM);EX=BASE_EX.concat(CUSTOM);
+      }else if(CUSTOM.length){
+        needPush=true;
+      }
       if(Array.isArray(x.cats))CATS=BASE_CATS.concat(x.cats);
       /* v1.11：昵称 / 头像以 profiles 行为准，settings 里的这两项不再覆盖本机——
          旧版本曾把安装默认的「卷卷大人 + 默认头像」写进 settings 行，
@@ -6161,6 +6247,7 @@ function pullSettings(){
       if(x.palette)PALETTE=x.palette;
       _lastSet=settingsPayload();
       applyTheme();saveLocalPrefs();renderAll();
+      if(needPush)pushSettings(true).catch(function(){});
       return true;
     }).catch(function(){return false;});
 }
@@ -6900,18 +6987,37 @@ function setGoal(n){
   renderGoal();
   return v;
 }
+/* v1.42：目标只统计俯卧撑 —— 标准俯卧撑 + 宽距 / 钻石等名称含「俯卧撑」的变式，
+   深蹲、引体、卷腹、计时类动作都不计入。 */
+function isPushupEx(id){
+  if(!id)return false;
+  if(id==="pushup")return true;
+  const e=(typeof EX!=="undefined")?EX.find(function(x){return x.id===id;}):null;
+  return !!(e&&/俯卧撑/.test(String(e.n||"")));
+}
+function pushupOfRec(r){
+  if(!r)return 0;
+  const items=r.items||[];
+  if(items.length){
+    let n=0;
+    items.forEach(function(it){if(it&&isPushupEx(it.id))n+=Number(it.v)||0;});
+    return Math.round(n);
+  }
+  /* 早期记录没有动作明细，只能退回当天总数（那时候基本只有俯卧撑） */
+  return Math.round(Number(r.p||r.total)||0);
+}
 function goalSumNow(){
   let n=0;
   (typeof todayRows!=="undefined"?todayRows:[]).forEach(function(r){
-    const u=normUnit((exById(r.id)||{}).u);
-    if(u==="个"&&r.v!=null)n+=Number(r.v)||0;
+    if(!r||!isPushupEx(r.id))return;
+    n+=Number(r.v)||0;
   });
   return Math.round(n);
 }
 /* v1.40：连续达标天数 —— 今天还没达标不算断，从昨天往前数 */
 function goalStreak(g){
   if(!g)return 0;
-  const set={};DATA.filter(hasWorkout).forEach(function(r){set[r.d]=Number(r.p)||0;});
+  const set={};DATA.filter(hasWorkout).forEach(function(r){set[r.d]=pushupOfRec(r);});
   const t=todayStr(),d=parseD(t);
   let n=0,guard=0;
   if(!(set[t]>=g))d.setDate(d.getDate()-1);
@@ -6936,7 +7042,7 @@ function renderGoal(){
   if(!g){
     if(num)num.textContent="点这里设置 ›";
     if(fill)fill.style.width="0%";
-    if(sub)sub.textContent="设一个每日目标，练完就知道还差多少";
+    if(sub)sub.textContent="设一个每日俯卧撑目标，练完就知道还差多少";
     card.classList.remove("done");
     return;
   }
@@ -6945,8 +7051,8 @@ function renderGoal(){
   if(fill)fill.style.width=pct+"%";
   const gs=done?goalStreak(g):0;
   if(sub)sub.textContent=done
-    ?("今日目标已完成"+(cur>g?" · 多做了 "+fmtNum(cur-g)+" 个":"")+(gs>1?" · 连续达标 "+gs+" 天":""))
-    :("还差 "+fmtNum(g-cur)+" 个");
+    ?("今日俯卧撑目标已完成"+(cur>g?" · 多做了 "+fmtNum(cur-g)+" 个":"")+(gs>1?" · 连续达标 "+gs+" 天":""))
+    :("还差 "+fmtNum(g-cur)+" 个俯卧撑");
   card.classList.toggle("done",done);
 }
 function openGoal(){
@@ -7224,6 +7330,174 @@ try{ renderGoal(); }catch(e){}
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",function(){hook();badge();});
   else{hook();badge();}
   setTimeout(function(){hook();badge();},900);
+})();
+</script>
+<script id="v142-egg-js">
+/* ============ v1.42：完成今日目标的彩蛋奖励 ============
+   达成当天的俯卧撑目标，就掉一枚彩蛋：14 种，普通 / 稀有 / 传说三档。
+   连续达标 ≥7 天或今天超额 50% 掉稀有，≥30 天掉传说。
+   全部只存本机，不联网、不改记录结构；每天只掉一枚。 */
+(function(){
+  var DAY_KEY="pushup_egg_day_v1", ALBUM_KEY="pushup_egg_album_v1";
+  var EGGS=[
+    {id:"arm",    e:"💪", n:"铁臂小将", r:"c", w:"手臂已经开始记住这个动作了。"},
+    {id:"fire",   e:"🔥", n:"热力全开", r:"c", w:"今天的汗，是明天的底气。"},
+    {id:"rock",   e:"🧱", n:"稳如磐石", r:"c", w:"姿势比数量重要，你守住了。"},
+    {id:"bolt",   e:"⚡", n:"电量满格", r:"c", w:"一组接一组，节奏刚刚好。"},
+    {id:"sprout", e:"🌱", n:"每天长一点", r:"c", w:"目标不是终点，是习惯的起点。"},
+    {id:"target", e:"🎯", n:"正中目标", r:"c", w:"计划完成，可以收工了。"},
+    {id:"juice",  e:"🥤", n:"补给时间", r:"c", w:"练完记得喝水，肌肉在等你。"},
+    {id:"moon",   e:"🌙", n:"悄悄变强", r:"c", w:"没人看见的训练，最算数。"},
+    {id:"medal",  e:"🏅", n:"百炼成钢", r:"r", w:"连着来的这些天，已经不是运气。"},
+    {id:"rocket", e:"🚀", n:"一飞冲天", r:"r", w:"今天超额完成，状态在往上走。"},
+    {id:"gem",    e:"💎", n:"钻石心态", r:"r", w:"难的从来不是个数，是每天都来。"},
+    {id:"candle", e:"🕯️", n:"稳定的火", r:"r", w:"不算猛，但一直没灭。"},
+    {id:"crown",  e:"👑", n:"俯卧撑之王", r:"l", w:"三十天的坚持，配得上这顶王冠。"},
+    {id:"dragon", e:"🐉", n:"觉醒之龙", r:"l", w:"打卡已经成了本能，去追下一个自己。"}
+  ];
+  var RAR_NAME={c:"普通",r:"稀有",l:"传说"};
+  function today(){ try{ return todayStr(); }catch(e){ return ""; } }
+  function onToday(){ try{ return (typeof curDate==="undefined")||curDate===today(); }catch(e){ return true; } }
+  function rd(k,def){ try{ var v=JSON.parse(localStorage.getItem(k)||"null"); return (v==null)?def:v; }catch(e){ return def; } }
+  function wr(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+  function byId(id){ for(var i=0;i<EGGS.length;i++)if(EGGS[i].id===id)return EGGS[i]; return null; }
+  function goal(){ try{ return Number(getGoal())||0; }catch(e){ return 0; } }
+  function cur(){ try{ return goalSumNow(); }catch(e){ return 0; } }
+  function done(){ return onToday()&&goal()>0&&cur()>=goal(); }
+  function rarity(gs,over,g){
+    if(gs>=30)return "l";
+    if(gs>=7)return "r";
+    if(g>0&&over>=g*0.5)return "r";
+    return "c";
+  }
+  function album(){ var a=rd(ALBUM_KEY,null); if(!a||typeof a!=="object"||!a.got||typeof a.got!=="object")a={v:1,got:{},n:0}; return a; }
+  function dex(){ var a=album(),k=0; for(var id in a.got)if(a.got[id]&&byId(id))k++; return k; }
+  function gotToday(){ var d=rd(DAY_KEY,null); return (d&&d.d===today())?d:null; }
+  /* 掉一枚彩蛋；今天已经掉过则返回 null（不会重复弹） */
+  function collect(){
+    if(gotToday())return null;
+    if(!done())return null;
+    var g=goal(),c=cur(),gs=0;
+    try{ gs=goalStreak(g); }catch(e){ gs=0; }
+    var rar=rarity(gs,c-g,g),pool=EGGS.filter(function(x){return x.r===rar;});
+    var prev=""; var old=rd(DAY_KEY,null); if(old&&old.id)prev=old.id;
+    var pick=pool[Math.floor(Math.random()*pool.length)];
+    if(pool.length>1&&pick.id===prev)pick=pool[(pool.indexOf(pick)+1)%pool.length];
+    var rec={d:today(),id:pick.id,rar:rar,ts:Date.now(),g:g,c:c,gs:gs};
+    wr(DAY_KEY,rec);
+    var a=album();
+    a.got[pick.id]=(a.got[pick.id]||0)+1;
+    a.n=(a.n||0)+1;
+    wr(ALBUM_KEY,a);
+    return rec;
+  }
+  function confetti(){
+    var wrap=document.getElementById("eggConfetti"); if(!wrap)return;
+    wrap.innerHTML="";
+    var colors=["var(--accent)","var(--green)","var(--blue)","var(--purple)","var(--amber)","var(--accent-mid)"];
+    for(var i=0;i<54;i++){
+      var p=document.createElement("i");
+      p.className="cel-piece";
+      p.style.left=(Math.random()*100)+"%";
+      p.style.background=colors[i%colors.length];
+      p.style.setProperty("--delay",(Math.random()*1.1).toFixed(2)+"s");
+      p.style.setProperty("--dur",(2.2+Math.random()*1.6).toFixed(2)+"s");
+      p.style.setProperty("--dx",(Math.random()*160-80).toFixed(0)+"px");
+      p.style.setProperty("--rot",(360+Math.random()*720).toFixed(0)+"deg");
+      p.style.width=(5+Math.random()*6).toFixed(0)+"px";
+      p.style.height=(9+Math.random()*9).toFixed(0)+"px";
+      wrap.appendChild(p);
+    }
+  }
+  function chip(){
+    var el=document.getElementById("eggChip"); if(!el)return;
+    var rec=gotToday(),egg=rec?byId(rec.id):null;
+    var on=!!(egg&&onToday());
+    el.classList.toggle("hide",!on);
+    if(on){
+      var nm=document.getElementById("eggChipName"),ic=document.getElementById("eggChipEmoji");
+      if(nm)nm.textContent=egg.n;
+      if(ic)ic.textContent=egg.e;
+    }
+  }
+  function show(rec,fresh){
+    var egg=rec?byId(rec.id):null; if(!egg)return;
+    var m=document.getElementById("eggModal"); if(!m)return;
+    var q=function(id){return document.getElementById(id);};
+    if(q("eggEmoji"))q("eggEmoji").textContent=egg.e;
+    if(q("eggName"))q("eggName").textContent=egg.n;
+    if(q("eggWord"))q("eggWord").textContent=egg.w;
+    var rar=q("eggRar");
+    if(rar){ rar.className="egg-rar "+egg.r; rar.textContent=RAR_NAME[egg.r]||"普通"; }
+    var parts=[];
+    if(Number(rec.gs)>1)parts.push("连续达标 "+rec.gs+" 天");
+    var over=Math.max(0,(Number(rec.c)||0)-(Number(rec.g)||0));
+    if(over>0)parts.push("超额 "+over+" 个");
+    var got=dex(),all=EGGS.length;
+    parts.push("图鉴 "+got+" / "+all+(got>=all?" · 已集齐":""));
+    if(q("eggDex"))q("eggDex").textContent=parts.join(" · ");
+    m.classList.add("on");
+    if(fresh){ confetti(); try{ celebrateSound(); }catch(e){} }
+  }
+  window.eggChipTap=function(ev){
+    if(ev&&ev.stopPropagation)ev.stopPropagation();
+    var rec=gotToday(); if(rec)show(rec,false);
+  };
+  window.showEgg=show;
+  window.closeEgg=function(){
+    var m=document.getElementById("eggModal"); if(m)m.classList.remove("on");
+    try{ stopCheer(); }catch(e){}
+  };
+  var base=null;
+  function after(){
+    chip();
+    var d=done();
+    if(base===null){ base=d; return; }
+    if(!base&&d){
+      /* 等手停下再弹，别打断正在输入的数字 */
+      setTimeout(function(){
+        if(!done())return;
+        var rec=collect();
+        if(!rec)return;
+        chip();
+        show(rec,true);
+        var card=document.getElementById("goalCard");
+        if(card){ card.classList.remove("pop"); void card.offsetWidth; card.classList.add("pop"); }
+      },480);
+    }
+    base=d;
+  }
+  function hook(){
+    if(typeof window.renderGoal==="function"&&!window.renderGoal.__egg){
+      var o=window.renderGoal;
+      var w=function(){ var r=o.apply(this,arguments); try{ after(); }catch(e){} return r; };
+      w.__egg=1;
+      window.renderGoal=w;
+    }
+    try{
+      if(typeof BACK_MODALS!=="undefined"){
+        var has=false;
+        for(var i=0;i<BACK_MODALS.length;i++)if(BACK_MODALS[i][0]==="eggModal")has=true;
+        if(!has)BACK_MODALS.unshift(["eggModal",window.closeEgg]);
+      }
+    }catch(e){}
+  }
+  var inited=false;
+  function boot(){
+    hook();
+    if(!inited){
+      inited=true;
+      try{
+        base=done();
+        /* 打开 App 时目标就已经达成：静默给一枚，只在卡片上留个印记，不打扰 */
+        if(base&&!gotToday())collect();
+      }catch(e){}
+    }
+    chip();
+  }
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot);
+  else boot();
+  setTimeout(boot,900);
 })();
 </script>
 </body>
